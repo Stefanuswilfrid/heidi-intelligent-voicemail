@@ -15,6 +15,8 @@ export type Confidence = "High" | "Medium" | "Low"
 
 export type Status = "New" | "In progress" | "Waiting" | "Done"
 
+export type HandledBy = "Automation" | "Staff"
+
 export interface ExtractedDetails {
   patientName?: string
   phone?: string
@@ -33,6 +35,7 @@ export interface WorkItem {
   missingInfo: string[]
   recommendedNextStep: string
   status: Status
+  handledBy?: HandledBy
   receivedAt: string
   whyFlagged?: string
   transcript: string

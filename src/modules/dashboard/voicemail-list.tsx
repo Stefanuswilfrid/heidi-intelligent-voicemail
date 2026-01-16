@@ -4,11 +4,27 @@ import { cn } from "@/lib/utils"
 import type { WorkItem } from "@/lib/types"
 import { getIntentIcon, getIntentLabel } from "@/lib/intent-utils"
 import { Clock } from "lucide-react"
+import { useEffect, useState } from "react"
 
 interface VoicemailListProps {
   items: WorkItem[]
   selectedId?: string
   onSelectItem: (item: WorkItem) => void
+}
+
+function ReceivedAtTime({ iso }: { iso: string }) {
+  const [label, setLabel] = useState<string>("—")
+
+  useEffect(() => {
+    const d = new Date(iso)
+    setLabel(d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }))
+  }, [iso])
+
+  return (
+    <span suppressHydrationWarning className="tabular-nums">
+      {label}
+    </span>
+  )
 }
 
 export function VoicemailList({ items, selectedId, onSelectItem }: VoicemailListProps) {
@@ -33,6 +49,7 @@ export function VoicemailList({ items, selectedId, onSelectItem }: VoicemailList
       <div className="divide-y divide-border">
         {items.map((item) => {
           const Icon = getIntentIcon(item.intent)
+          const isAutoResolved = item.handledBy === "Automation" && item.status === "Done"
           const urgencyColor =
             item.urgency === "Urgent"
               ? "bg-red-100 text-red-800 border-red-200"
@@ -50,13 +67,19 @@ export function VoicemailList({ items, selectedId, onSelectItem }: VoicemailList
               )}
             >
               <div className="flex items-start gap-3">
-                <div className={cn("px-2 py-1 rounded-md text-xs font-semibold border", urgencyColor)}>
-                  {item.urgency}
-                </div>
+                {isAutoResolved ? (
+                  <div className="px-2 py-1 rounded-md text-xs font-semibold border bg-emerald-100 text-emerald-800 border-emerald-200">
+                    Auto-resolved
+                  </div>
+                ) : (
+                  <div className={cn("px-2 py-1 rounded-md text-xs font-semibold border", urgencyColor)}>
+                    {item.urgency}
+                  </div>
+                )}
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <Icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
                     <span className="text-xs font-medium text-muted-foreground">{getIntentLabel(item.intent)}</span>
                     {item.confidence === "Low" && (
                       <span className="text-xs text-amber-600 font-medium">Low confidence</span>
@@ -84,7 +107,7 @@ export function VoicemailList({ items, selectedId, onSelectItem }: VoicemailList
 
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <span className="font-medium text-secondary">→ {item.recommendedNextStep}</span>
-                    <span>{new Date(item.receivedAt).toLocaleTimeString()}</span>
+                    <ReceivedAtTime iso={item.receivedAt} />
                   </div>
                 </div>
               </div>

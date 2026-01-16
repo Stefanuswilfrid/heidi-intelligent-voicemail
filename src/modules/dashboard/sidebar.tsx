@@ -50,7 +50,7 @@ export function Sidebar({ currentFilter, onFilterChange, counts }: SidebarProps)
       count: counts.autoResolved,
       color: "text-emerald-700",
       hintTitle: "Handled automatically",
-      hintBody: "Resolved by the system (e.g. service info, status updates). No staff work needed.",
+      hintBody: "Resolved by the system through knowledge base (SOP, Product ListStart, FAQ, Business Docs). No staff work needed.",
     },
     {
       id: "all",

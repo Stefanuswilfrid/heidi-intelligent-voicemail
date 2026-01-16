@@ -14,9 +14,7 @@ export function VoicemailDashboard() {
   const [workItems, setWorkItems] = useState<WorkItem[]>(mockWorkItems)
 
   const counts = {
-    needsAction: workItems.filter(
-      (i) => (i.handledBy ?? "Staff") !== "Automation" && i.status !== "Done" && i.confidence !== "Low",
-    ).length,
+    needsAction: workItems.filter((i) => i.status !== "Done" && i.confidence !== "Low").length,
     needsReview: workItems.filter((i) => i.confidence === "Low" && i.status !== "Done").length,
     autoResolved: workItems.filter((i) => i.handledBy === "Automation" && i.status === "Done").length,
     all: workItems.length,
@@ -24,7 +22,7 @@ export function VoicemailDashboard() {
 
   const filteredItems = workItems.filter((item) => {
     if (filter === "needs-action")
-      return (item.handledBy ?? "Staff") !== "Automation" && item.status !== "Done" && item.confidence !== "Low"
+      return item.status !== "Done" && item.confidence !== "Low"
     if (filter === "needs-review") return item.confidence === "Low" && item.status !== "Done"
     if (filter === "auto-resolved") return item.handledBy === "Automation" && item.status === "Done"
     if (filter === "all") return true

@@ -1,6 +1,6 @@
 "use client"
 
-import { X, Phone, CheckCircle, AlertCircle, Clock, Sparkles, FileText, Info } from "lucide-react"
+import { X, Phone, CheckCircle, AlertCircle, Clock, Sparkles, FileText, Info, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { WorkItem } from "@/lib/types"
 import { getIntentIcon, getIntentLabel } from "@/lib/intent-utils"
@@ -142,7 +142,10 @@ function buildTranscriptTurns(item: WorkItem, receivedAt: Date): TranscriptTurn[
   return turns
 }
 
-function parseSummaryChecklist(summary: string) {
+type SummaryTone = "success" | "warning" | "info"
+type SummaryItem = { text: string; tone: SummaryTone }
+
+function parseSummaryChecklist(summary: string): SummaryItem[] | null {
   const lines = summary
     .split("\n")
     .map((l) => l.trim())
@@ -154,9 +157,36 @@ function parseSummaryChecklist(summary: string) {
   const withoutHeading =
     /summary of what/i.test(lines[0]) || /what i (have|'ve) done/i.test(lines[0]) ? lines.slice(1) : lines
 
-  const items = withoutHeading
-    .map((l) => l.replace(/^\d+\.\s*/, "").replace(/^[-•]\s*/, "").trim())
+  const normalize = (l: string) => l.replace(/^\d+\.\s*/, "").replace(/^[-•]\s*/, "").trim()
+
+  const parseTone = (raw: string): { tone: SummaryTone; text: string } => {
+    let text = raw.trim()
+    const lower = text.toLowerCase()
+
+    const markerMatch = text.match(/^\[(warn|warning|info|note|ok|done|success)\]\s*/i)
+    if (markerMatch) {
+      const m = markerMatch[1].toLowerCase()
+      text = text.replace(markerMatch[0], "").trim()
+      if (m === "warn" || m === "warning") return { tone: "warning", text }
+      if (m === "info" || m === "note") return { tone: "info", text }
+      return { tone: "success", text }
+    }
+
+    if (/(prompt[- ]injection|ignore previous|disclose|policy|unsafe|risk|flag|detected)/i.test(lower)) {
+      return { tone: "warning", text }
+    }
+    if (/(routed|queued|handoff|forwarded|awaiting|pending|follow[- ]up)/i.test(lower)) {
+      return { tone: "info", text }
+    }
+    return { tone: "success", text }
+  }
+
+  const items: SummaryItem[] = withoutHeading
+    .map(normalize)
     .filter(Boolean)
+    .map((l) => parseTone(l))
+    .filter((x) => x.text.length > 0)
+    .map((x) => ({ text: x.text, tone: x.tone }))
 
   return items.length ? items : null
 }
@@ -304,14 +334,37 @@ export function VoicemailDetail({ item, onClose, onStatusChange }: VoicemailDeta
                 }
                 return (
                   <ul className="space-y-2">
-                    {checklist.map((text, idx) => (
-                      <li key={idx} className="flex items-start gap-2 text-sm text-foreground">
-                        <span className="mt-0.5 h-5 w-5 rounded-full bg-emerald-100 border border-emerald-200 grid place-items-center shrink-0">
-                          <Check className="h-3.5 w-3.5 text-emerald-700" />
-                        </span>
-                        <span className="leading-relaxed text-pretty">{text}</span>
-                      </li>
-                    ))}
+                    {checklist.map((item, idx) => {
+                      const toneStyles =
+                        item.tone === "warning"
+                          ? {
+                              wrap: "bg-amber-100 border-amber-200",
+                              icon: <AlertTriangle className="h-3.5 w-3.5 text-amber-700" />,
+                            }
+                          : item.tone === "info"
+                            ? {
+                                wrap: "bg-sky-100 border-sky-200",
+                                icon: <Info className="h-3.5 w-3.5 text-sky-700" />,
+                              }
+                            : {
+                                wrap: "bg-emerald-100 border-emerald-200",
+                                icon: <Check className="h-3.5 w-3.5 text-emerald-700" />,
+                              }
+
+                      return (
+                        <li key={idx} className="flex items-start gap-2 text-sm text-foreground">
+                          <span
+                            className={cn(
+                              "mt-0.5 h-5 w-5 rounded-full border grid place-items-center shrink-0",
+                              toneStyles.wrap,
+                            )}
+                          >
+                            {toneStyles.icon}
+                          </span>
+                          <span className="leading-relaxed text-pretty">{item.text}</span>
+                        </li>
+                      )
+                    })}
                   </ul>
                 )
               })()}
@@ -320,6 +373,11 @@ export function VoicemailDetail({ item, onClose, onStatusChange }: VoicemailDeta
             <div className="bg-primary/15 rounded-2xl p-4 border border-primary/40">
               <h4 className="text-sm font-semibold text-secondary mb-1">Recommended Next Step</h4>
               <p className="text-sm text-secondary font-semibold">{item.recommendedNextStep}</p>
+              {item.status === "Waiting" && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  ⏳ Awaiting practitioner confirmation (after-hours)
+                </p>
+              )}
             </div>
 
             {item.missingInfo.length > 0 && (

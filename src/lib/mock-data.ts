@@ -96,37 +96,6 @@ export const mockWorkItems: WorkItem[] = [
       `[13:05] Sunset GP Team: No worries — my colleague will get back to you. What’s the best time to reach you back?`,
   },
   {
-    id: "6",
-    intent: "Book appointment",
-    urgency: "Today",
-    summary:
-      "Summary of what I completed\n" +
-      "1. Scanned today’s practitioner schedules and confirmed all appointments are fully booked.\n" +
-      "2. Checked tomorrow’s calendar and found a couple of available slots.\n" +
-      "3. Asked the patient to confirm their preferred time tomorrow.\n" +
-      "4. Prepared to notify the practitioner and add a reminder once the patient confirms.",
-    extractedDetails: {
-      patientName: "David Lee",
-      phone: "555-0891",
-      preferredTime: "Tomorrow (flexible)",
-    },
-    confidence: "High",
-    missingInfo: [],
-    recommendedNextStep: "Await patient confirmation on a tomorrow slot; then confirm and add calendar reminder",
-    status: "Waiting",
-    handledBy: "Automation",
-    receivedAt: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
-    transcript:
-      `[11:18] Sunset GP Team: Hi, this is Alex from Sunset GP. How can I help?\n` +
-      `[11:18] Caller: Hi, this is David Lee — I’d like to book an appointment today if possible.\n` +
-      `[11:19] Sunset GP Team: Thanks, David. I’ve scanned today’s schedules — all practitioners are fully booked.\n` +
-      `[11:19] Sunset GP Team: I can see a couple of openings tomorrow. Would tomorrow work for you?\n` +
-      `[11:20] Caller: Yes, tomorrow works.\n` +
-      `[11:20] Sunset GP Team: Great — do you prefer morning, afternoon, or a specific time (e.g. 10:30 or 15:00)?\n` +
-      `[11:21] Caller: Afternoon would be best.\n` +
-      `[11:21] Sunset GP Team: Got it — I’ll line up an afternoon slot and we’ll confirm shortly.`,
-  },
-  {
     id: "7",
     intent: "Other / unclear",
     urgency: "Routine",
@@ -151,46 +120,26 @@ export const mockWorkItems: WorkItem[] = [
     intent: "Other / unclear",
     urgency: "Routine",
     summary:
-      "Caller asked a basic service question (travel vaccines). System responded with service availability and next steps; no callback required.",
+      "Summary of what I completed\n" +
+      "1. Customer asked whether the clinic provides travel vaccines.\n" +
+      "2. Scanned the business info documents in the knowledge base for service availability.\n" +
+      "3. Responded with the clinic’s service information and next steps.\n" +
+      "4. Customer acknowledged with 'okay, thank you'",
     extractedDetails: {},
     confidence: "High",
     missingInfo: [],
-    recommendedNextStep: "Auto-resolved: provided service information (no callback needed)",
+    recommendedNextStep: "Auto-resolved: provided service information from business info documents",
     status: "Done",
     handledBy: "Automation",
     receivedAt: new Date(Date.now() - 1000 * 60 * 8).toISOString(),
     transcript:
       `[15:26] Sunset GP Team: Hi, this is Alex from Sunset GP. How can I help?\n` +
       `[15:26] Caller: Hi — do you provide travel vaccines?\n` +
-      `[15:27] Sunset GP Team: Yes — we provide common travel vaccines. If you share your destination and travel date, we can advise what you need.\n` +
-      `[15:27] Sunset GP Team: You can book online or call reception during opening hours. Would you like the booking link?\n` +
-      `[15:28] Caller: Yes please.\n` +
-      `[15:28] Sunset GP Team: Sure — here’s the booking link and our opening hours. Anything else I can help with?`,
-  },
-  {
-    id: "10",
-    intent: "Other / unclear",
-    urgency: "Routine",
-    summary:
-      "Caller forgot what supplements Dr. Patel recommended. System confirmed the plan on file and provided the instructions; no callback required.",
-    extractedDetails: {
-      patientName: "Daniel Harper",
-      clinician: "Dr. Patel",
-    },
-    confidence: "High",
-    missingInfo: [],
-    recommendedNextStep: "Auto-resolved: provided supplement instructions from the care plan (no callback needed)",
-    status: "Done",
-    handledBy: "Automation",
-    receivedAt: new Date(Date.now() - 1000 * 60 * 22).toISOString(),
-    transcript:
-      `[09:18] Sunset GP Team: Hi, this is Alex from Sunset GP. How can I help?\n` +
-      `[09:18] Caller: Hi — Dr. Patel told me to take some supplements but I forgot which ones. Can you remind me?\n` +
-      `[09:19] Sunset GP Team: Sure — I can see your care plan from Dr. Patel.\n` +
-      `[09:19] Sunset GP Team: It notes: Vitamin D3 1000 IU once daily, and magnesium glycinate 200 mg at night.\n` +
-      `[09:20] Sunset GP Team: If you have any side effects or questions about dosing, please book a follow‑up.\n` +
-      `[09:20] Caller: Great, thanks.\n` +
-      `[09:21] Sunset GP Team: You’re welcome — anything else I can help with?`,
+      `[15:27] Sunset GP Team: Let me check our business info documents.\n` +
+      `[15:27] Sunset GP Team: Yes — we provide common travel vaccines.\n` +
+      `[15:27] Sunset GP Team: If you share your destination and travel date, we can advise what you need. You can also book online or call reception.\n` +
+      `[15:28] Caller: Okay, thank you.\n` +
+      `[15:28] Sunset GP Team: You’re welcome — anything else I can help with?`,
   },
   {
     id: "11",
@@ -199,26 +148,30 @@ export const mockWorkItems: WorkItem[] = [
     summary:
       "Summary of what I completed\n" +
       "1. Checked today’s vaccine appointment availability and confirmed all practitioners are fully booked.\n" +
-      "2. Scanned tomorrow’s calendar and found availability (including a 3:00 PM slot).\n" +
-      "3. Forwarded the request to the practitioner for confirmation.\n" +
-      "4. Added a calendar reminder for tomorrow at 3:00 PM pending confirmation.",
+      "2. Scanned Dr. Aisha Rahman’s calendar for tomorrow and found 3 empty slots between 4:00 PM and 5:30 PM.\n" +
+      "3. Offered those 3 slots to the customer and captured their selection.\n" +
+      "4. Forwarded the chosen slot via WhatsApp to Dr. Aisha Rahman.\n" +
+      "5. Dr. Aisha Rahman confirmed the booking.\n" +
+      "6. Added a calendar reminder for the confirmed slot (tomorrow at 4:45 PM).",
     extractedDetails: {
       patientName: "Maya Collins",
-      preferredTime: "Tomorrow 3:00 PM",
+      preferredTime: "Tomorrow 4:45 PM",
     },
     confidence: "High",
     missingInfo: [],
-    recommendedNextStep: "Await practitioner confirmation; send booking confirmation to patient",
-    status: "Waiting",
+    recommendedNextStep: "Auto-resolved: booking confirmed; send confirmation message to patient",
+    status: "Done",
     handledBy: "Automation",
     receivedAt: new Date(Date.now() - 1000 * 60 * 12).toISOString(),
     transcript:
       `[17:05] Sunset GP Team: Hi, this is Alex from Sunset GP. How can I help?\n` +
       `[17:05] Caller: Hi — I’d like to schedule a vaccine appointment today if possible.\n` +
       `[17:06] Sunset GP Team: Thanks. I’ve checked today’s schedule — all practitioners are fully booked.\n` +
-      `[17:06] Sunset GP Team: I can see availability tomorrow, including a 3:00 PM slot. Would tomorrow at 3 PM work?\n` +
-      `[17:07] Caller: Yes, tomorrow 3pm works.\n` +
-      `[17:07] Sunset GP Team: Great — I’ve forwarded your request to the practitioner for confirmation and set a reminder.\n` +
-      `[17:08] Sunset GP Team: We’ll confirm the booking as soon as it’s approved.`,
+      `[17:06] Sunset GP Team: I checked Dr. Aisha Rahman’s calendar for tomorrow — she has 3 open slots between 4:00 PM and 5:30 PM (4:00, 4:45, 5:30).\n` +
+      `[17:07] Sunset GP Team: Which time would you like to book?\n` +
+      `[17:07] Caller: 4:45 PM please.\n` +
+      `[17:07] Sunset GP Team: Great — I’ll forward the 4:45 PM request via WhatsApp to Dr. Aisha Rahman now.\n` +
+      `[17:08] Dr. Aisha Rahman: Confirmed — booked for tomorrow at 4:45 PM.\n` +
+      `[17:08] Sunset GP Team: Perfect — you’re booked for tomorrow at 4:45 PM. We’ll send a confirmation shortly.`,
   },
 ]

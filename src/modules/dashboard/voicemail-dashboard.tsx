@@ -10,16 +10,24 @@ import { mockWorkItems } from "@/lib/mock-data"
 
 export function VoicemailDashboard() {
   const [selectedItem, setSelectedItem] = useState<WorkItem | null>(null)
-  const [filter, setFilter] = useState<string>("all")
+  const [filter, setFilter] = useState<string>("needs-action")
   const [workItems, setWorkItems] = useState<WorkItem[]>(mockWorkItems)
 
+  const counts = {
+    needsAction: workItems.filter(
+      (i) => (i.handledBy ?? "Staff") !== "Automation" && i.status !== "Done" && i.confidence !== "Low",
+    ).length,
+    needsReview: workItems.filter((i) => i.confidence === "Low" && i.status !== "Done").length,
+    autoResolved: workItems.filter((i) => i.handledBy === "Automation" && i.status === "Done").length,
+    all: workItems.length,
+  }
+
   const filteredItems = workItems.filter((item) => {
-    if (filter === "all") return item.status !== "Done"
-    if (filter === "urgent") return item.urgency === "Urgent" && item.status !== "Done"
-    if (filter === "today") return item.urgency === "Today" && item.status !== "Done"
-    if (filter === "routine") return item.urgency === "Routine" && item.status !== "Done"
+    if (filter === "needs-action")
+      return (item.handledBy ?? "Staff") !== "Automation" && item.status !== "Done" && item.confidence !== "Low"
     if (filter === "needs-review") return item.confidence === "Low" && item.status !== "Done"
-    if (filter === "done") return item.status === "Done"
+    if (filter === "auto-resolved") return item.handledBy === "Automation" && item.status === "Done"
+    if (filter === "all") return true
     return true
   })
 
@@ -32,13 +40,7 @@ export function VoicemailDashboard() {
       <Sidebar
         currentFilter={filter}
         onFilterChange={setFilter}
-        counts={{
-          urgent: workItems.filter((i) => i.urgency === "Urgent" && i.status !== "Done").length,
-          today: workItems.filter((i) => i.urgency === "Today" && i.status !== "Done").length,
-          routine: workItems.filter((i) => i.urgency === "Routine" && i.status !== "Done").length,
-          needsReview: workItems.filter((i) => i.confidence === "Low" && i.status !== "Done").length,
-          done: workItems.filter((i) => i.status === "Done").length,
-        }}
+        counts={counts}
       />
       <div className="flex flex-1 overflow-hidden">
         <VoicemailList items={filteredItems} selectedId={selectedItem?.id} onSelectItem={setSelectedItem} />

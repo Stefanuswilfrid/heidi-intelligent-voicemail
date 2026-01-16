@@ -31,7 +31,7 @@ function formatDuration(seconds: number) {
 }
 
 type TranscriptSpeaker = "ai" | "caller"
-type TranscriptTurn = { speaker: TranscriptSpeaker; text: string; at: Date }
+type TranscriptTurn = { speaker: TranscriptSpeaker; text: string; at: Date; who?: string }
 
 function splitTranscriptIntoChunks(text: string) {
   const cleaned = text.trim()
@@ -65,7 +65,7 @@ function parseChatTranscript(raw: string, receivedAt: Date): TranscriptTurn[] | 
     const at = new Date(receivedAt)
     at.setHours(Number(hh), Number(mm), 0, 0)
     const speaker: TranscriptSpeaker = /caller/i.test(who) ? "caller" : "ai"
-    parsed.push({ speaker, text: text.trim(), at })
+    parsed.push({ speaker, text: text.trim(), at, who: who.trim() })
   }
   return parsed.length ? parsed : null
 }
@@ -87,6 +87,7 @@ function buildTranscriptTurns(item: WorkItem, receivedAt: Date): TranscriptTurn[
           speaker: "ai",
           text: "My colleague will get back to you, whats the best time to reach you back?",
           at: new Date(turn.at.getTime() + 30 * 1000),
+          who: "Sunset GP Team",
         })
       }
     }
@@ -97,19 +98,19 @@ function buildTranscriptTurns(item: WorkItem, receivedAt: Date): TranscriptTurn[
   const t0 = new Date(receivedAt)
   let offsetSeconds = 0
 
-  const push = (speaker: TranscriptSpeaker, text: string) => {
+  const push = (speaker: TranscriptSpeaker, text: string, who?: string) => {
     if (!text.trim()) return
-    turns.push({ speaker, text: text.trim(), at: new Date(t0.getTime() + offsetSeconds * 1000) })
+    turns.push({ speaker, text: text.trim(), at: new Date(t0.getTime() + offsetSeconds * 1000), who })
     offsetSeconds += speaker === "ai" ? 30 : 45
   }
 
-  push("ai", "Hi, this is Sunset GP Team. How can we help today?")
+  push("ai", "Hi, this is Sunset GP Team. How can we help today?", "Sunset GP Team")
 
   const callerChunks = splitTranscriptIntoChunks(item.transcript)
   if (callerChunks.length === 0) {
     push("caller", "(No transcript available)")
   } else {
-    for (const chunk of callerChunks) push("caller", chunk)
+    for (const chunk of callerChunks) push("caller", chunk, "Caller")
   }
 
   // Add AI follow-ups for missing info (so the UI shows both sides like the reference).
@@ -134,8 +135,8 @@ function buildTranscriptTurns(item: WorkItem, receivedAt: Date): TranscriptTurn[
   }
 
   for (const missing of item.missingInfo) {
-    push("ai", labelToQuestion[missing] ?? `Could you provide: ${missing}?`)
-    push("caller", answerFor(missing))
+    push("ai", labelToQuestion[missing] ?? `Could you provide: ${missing}?`, "Sunset GP Team")
+    push("caller", answerFor(missing), "Caller")
   }
 
   return turns
@@ -350,6 +351,7 @@ export function VoicemailDetail({ item, onClose, onStatusChange }: VoicemailDeta
               <div className="rounded-2xl bg-muted/40 border border-border p-4 space-y-4">
                 {transcriptTurns.map((turn, idx) => {
                   const isAi = turn.speaker === "ai"
+                  const aiName = turn.who && !/caller/i.test(turn.who) ? turn.who : "Sunset GP Team"
                   return (
                     <div key={idx} className={cn("flex items-start gap-3", isAi ? "" : "justify-end")}>
                       {!isAi ? null : (
@@ -364,7 +366,7 @@ export function VoicemailDetail({ item, onClose, onStatusChange }: VoicemailDeta
                           {isAi && (
                             <>
                               <span aria-hidden="true"> • </span>
-                              <span className="font-semibold text-secondary">Sunset GP Team</span>
+                              <span className="font-semibold text-secondary">{aiName}</span>
                             </>
                           )}
                         </div>

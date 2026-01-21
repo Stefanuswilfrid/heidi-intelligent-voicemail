@@ -6,7 +6,10 @@ export const mockWorkItems: WorkItem[] = [
     intent: "Urgent symptoms",
     urgency: "Urgent",
     summary:
-      "Patient reporting severe chest pain and shortness of breath for the past hour. Requested immediate callback.",
+      "Summary of what I completed\n" +
+      "1. Identified urgent symptoms (severe chest pain and shortness of breath lasting ~1 hour).\n" +
+      "2. Marked this voicemail for immediate attention and recommended an urgent callback.\n" +
+      "3. Advised escalation to emergency services if symptoms are severe or worsening.",
     extractedDetails: {
       patientName: "Sarah Mitchell",
       phone: "555-0123",
@@ -112,7 +115,7 @@ export const mockWorkItems: WorkItem[] = [
   {
     id: "11",
     intent: "Book appointment",
-    urgency: "Today",
+    urgency: "Urgent",
     summary:
       "Summary of what I completed\n" +
       "1. Checked today’s vaccine appointment availability and confirmed all practitioners are fully booked.\n" +

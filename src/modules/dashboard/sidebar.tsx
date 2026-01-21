@@ -19,10 +19,10 @@ export function Sidebar({ currentFilter, onFilterChange, counts }: SidebarProps)
   const totalActive = counts.urgent + counts.today + counts.routine
 
   const mainFilters = [
-    { id: "all", label: "My Inbox", icon: Inbox, count: totalActive },
-    { id: "needs-review", label: "Needs Review", icon: Users, count: counts.needsReview },
     { id: "urgent", label: "Urgent", icon: UserCheck, count: counts.urgent },
-    { id: "done", label: "Completed", icon: FileText, count: counts.done },
+    { id: "needs-review", label: "Needs Review", icon: Users, count: counts.needsReview },
+    { id: "done", label: "Auto Resolved", icon: FileText, count: counts.done },
+    { id: "all", label: "My Inbox", icon: Inbox, count: totalActive },
     { id: "archived", label: "Archived", icon: Archive, count: 0 },
   ]
 

@@ -9,7 +9,7 @@ import { mockWorkItems } from "@/lib/mock-data"
 
 export function VoicemailDashboard() {
   const [selectedItem, setSelectedItem] = useState<WorkItem | null>(null)
-  const [filter, setFilter] = useState<string>("all")
+  const [filter, setFilter] = useState<string>("urgent")
   const [workItems, setWorkItems] = useState<WorkItem[]>(mockWorkItems)
 
   const filteredItems = workItems.filter((item) => {
@@ -19,6 +19,7 @@ export function VoicemailDashboard() {
     if (filter === "routine") return item.urgency === "Routine" && item.status !== "Done"
     if (filter === "needs-review") return item.confidence === "Low" && item.status !== "Done"
     if (filter === "done") return item.status === "Done"
+    if (filter === "archived") return false
     return true
   })
 

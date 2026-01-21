@@ -1,22 +1,14 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
-import {
-  X,
-  Phone,
-  Sparkles,
-  AudioLines,
-  ChevronDown,
-  CheckCircle2,
-  AlertTriangle,
-  Info,
-  Volume2,
-  Square,
-  PlayIcon,
+import { useMemo, useState } from "react"
+import { X, Phone, Sparkles, AudioLines, ChevronDown, CheckCircle2, AlertTriangle, Info, Volume2, Square, PlayIcon,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { WorkItem } from "@/lib/types"
 import { cn } from "@/lib/utils"
+import { formatRelativeTime, formatTime } from "@/lib/time-utils"
+import { useTranscriptTts } from "./hooks/use-transcript-tts"
+import { buildTtsText, parseSummaryItems, parseTranscriptLines } from "./utils/voicemail"
 
 interface VoicemailDetailProps {
   item: WorkItem
@@ -24,119 +16,8 @@ interface VoicemailDetailProps {
   onStatusChange: (id: string, status: WorkItem["status"]) => void
 }
 
-function formatTime(receivedAt: string): string {
-  const received = new Date(receivedAt)
-  return received.toLocaleDateString("en-US", { 
-    month: "short", 
-    day: "numeric" 
-  }) + ", " + received.toLocaleTimeString("en-US", { 
-    hour: "2-digit", 
-    minute: "2-digit" 
-  })
-}
-
-function formatRelativeTime(receivedAt: string): string {
-  const then = new Date(receivedAt).getTime()
-  const now = Date.now()
-  const diffMs = now - then
-  if (!Number.isFinite(diffMs)) return "Received recently"
-
-  const minutes = Math.floor(diffMs / (1000 * 60))
-  if (minutes < 1) return "Received just now"
-  if (minutes < 60) return `Received ${minutes} min ago`
-
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `Received ${hours} hour${hours === 1 ? "" : "s"} ago`
-
-  const days = Math.floor(hours / 24)
-  return `Received ${days} day${days === 1 ? "" : "s"} ago`
-}
-
-function isAfterHours(receivedAt: string): boolean {
-  const d = new Date(receivedAt)
-  const hour = d.getHours()
-  // Simple heuristic: after-hours outside 8am–6pm local time.
-  return hour < 8 || hour >= 18
-}
-
 function formatDuration(): string {
   return `${Math.floor(Math.random() * 2) + 1}m ${Math.floor(Math.random() * 59) + 1}s`
-}
-
-type SummaryTone = "success" | "warning" | "info"
-type SummaryItem = { tone: SummaryTone; text: string }
-
-type TranscriptLine = { time: string; who: string; text: string }
-
-function parseTranscriptLines(transcript: string): TranscriptLine[] | null {
-  const lines = transcript
-    .split("\n")
-    .map((l) => l.trim())
-    .filter(Boolean)
-
-  const pattern = /^\[(\d{1,2}):(\d{2})\]\s*(.+?):\s*(.+)$/
-  const parsed: TranscriptLine[] = []
-  for (const line of lines) {
-    const m = line.match(pattern)
-    if (!m) return null
-    const [, hh, mm, who, text] = m
-    parsed.push({
-      time: `${hh.padStart(2, "0")}:${mm}`,
-      who: who.trim(),
-      text: text.trim(),
-    })
-  }
-
-  return parsed.length ? parsed : null
-}
-
-function buildTtsText(lines: TranscriptLine[] | null, fallback: string) {
-  if (!lines) return fallback
-  return lines
-    .map((l) => {
-      const who = l.who.trim()
-      // Make it more natural for TTS than reading timestamps.
-      return `${who}: ${l.text}`
-    })
-    .join("\n")
-}
-
-function parseSummaryItems(summary: string): SummaryItem[] | null {
-  const lines = summary
-    .split("\n")
-    .map((l) => l.trim())
-    .filter(Boolean)
-
-  if (lines.length <= 1) return null
-
-  const contentLines =
-    /summary of what/i.test(lines[0]) || /what i (have|'ve) done/i.test(lines[0]) ? lines.slice(1) : lines
-
-  const normalize = (l: string) => l.replace(/^\d+\.\s*/, "").replace(/^[-•]\s*/, "").trim()
-
-  const parseTone = (raw: string): SummaryItem => {
-    let text = raw.trim()
-    const markerMatch = text.match(/^\[(warn|warning|info|note|ok|done|success)\]\s*/i)
-    if (markerMatch) {
-      const m = markerMatch[1].toLowerCase()
-      text = text.replace(markerMatch[0], "").trim()
-      if (m === "warn" || m === "warning") return { tone: "warning", text }
-      if (m === "info" || m === "note") return { tone: "info", text }
-      return { tone: "success", text }
-    }
-
-    const lower = text.toLowerCase()
-    if (/(prompt[- ]injection|ignore previous|disclose|unsafe|risk|flag|detected)/i.test(lower)) {
-      return { tone: "warning", text }
-    }
-    if (/(routed|queued|handoff|forwarded|awaiting|pending|follow[- ]up)/i.test(lower)) {
-      return { tone: "info", text }
-    }
-    return { tone: "success", text }
-  }
-
-  const items = contentLines.map(normalize).filter(Boolean).map(parseTone).filter((x) => x.text.length > 0)
-  return items.length ? items : null
 }
 
 export function VoicemailDetail({ item, onClose, onStatusChange }: VoicemailDetailProps) {
@@ -148,95 +29,10 @@ export function VoicemailDetail({ item, onClose, onStatusChange }: VoicemailDeta
     [parsedTranscript, item.transcript],
   )
 
-  const [ttsSupported, setTtsSupported] = useState(false)
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [hasUtterance, setHasUtterance] = useState(false)
-  const [rate, setRate] = useState<1 | 1.5 | 2>(1)
-  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
-
-  useEffect(() => {
-    setTtsSupported(typeof window !== "undefined" && "speechSynthesis" in window)
-  }, [])
-
-  // Reset TTS when switching items
-  useEffect(() => {
-    if (typeof window !== "undefined" && "speechSynthesis" in window) {
-      window.speechSynthesis.cancel()
-    }
-    utteranceRef.current = null
-    setIsPlaying(false)
-    setHasUtterance(false)
-  }, [item.id])
-
-  const stopTts = () => {
-    if (typeof window !== "undefined" && "speechSynthesis" in window) {
-      window.speechSynthesis.cancel()
-    }
-    utteranceRef.current = null
-    setIsPlaying(false)
-    setHasUtterance(false)
-  }
-
-  const startTts = () => {
-    if (!(typeof window !== "undefined" && "speechSynthesis" in window)) return
-
-    // Restart cleanly each time to keep the UI simple/predictable.
-    window.speechSynthesis.cancel()
-    const u = new SpeechSynthesisUtterance(ttsText)
-    u.rate = rate
-    u.onend = () => {
-      utteranceRef.current = null
-      setIsPlaying(false)
-      setHasUtterance(false)
-    }
-    u.onerror = () => {
-      utteranceRef.current = null
-      setIsPlaying(false)
-      setHasUtterance(false)
-    }
-    utteranceRef.current = u
-    window.speechSynthesis.speak(u)
-    setIsPlaying(true)
-    setHasUtterance(true)
-  }
-
-  const pauseTts = () => {
-    if (!(typeof window !== "undefined" && "speechSynthesis" in window)) return
-    window.speechSynthesis.pause()
-    setIsPlaying(false)
-    setHasUtterance(true)
-  }
-
-  const resumeTts = () => {
-    if (!(typeof window !== "undefined" && "speechSynthesis" in window)) return
-    window.speechSynthesis.resume()
-    setIsPlaying(true)
-    setHasUtterance(true)
-  }
-
-  const toggleTts = () => {
-    if (!ttsSupported) return
-    // If we have an utterance that was paused, resume. Otherwise (re)start from beginning.
-    if (utteranceRef.current && typeof window !== "undefined" && window.speechSynthesis.paused) {
-      resumeTts()
-      return
-    }
-    if (isPlaying) {
-      pauseTts()
-      return
-    }
-    startTts()
-  }
-
-  useEffect(() => {
-    // If rate changes mid-play, restart to apply it (simple behavior).
-    if (!ttsSupported) return
-    if (!utteranceRef.current) return
-    if (isPlaying) {
-      startTts()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rate])
+  const { ttsSupported, isPlaying, hasUtterance, rate, setRate, toggleTts, stopTts } = useTranscriptTts({
+    text: ttsText,
+    itemId: item.id,
+  })
 
   return (
     <div className="flex-1 flex flex-col bg-card animate-fade-in-up">
@@ -335,7 +131,7 @@ export function VoicemailDetail({ item, onClose, onStatusChange }: VoicemailDeta
                         {item.urgency}
                       </span>
                     </div>
-                    <div className="text-xs text-muted-foreground">{formatRelativeTime(item.receivedAt)}</div>
+                    <div className="text-xs text-muted-foreground">{formatRelativeTime(item.receivedAt, "received")}</div>
                   </div>
                 </div>
 
@@ -389,19 +185,19 @@ export function VoicemailDetail({ item, onClose, onStatusChange }: VoicemailDeta
           </div>
         </div>
 
-        {/* Assessment (below tabs) */}
-        <div className="px-4 pb-2">
-          <div className="space-y-2">
-            <div className="text-xs text-muted-foreground">Assessment</div>
-            <p className="text-sm text-foreground leading-relaxed">
-              Customer seems calm, but has potential to become frustrated. Likely non-technical as she hasn't read the
-              instruction on her medicine.
-            </p>
-          </div>
-        </div>
-
         {/* Content Area */}
         <div className="flex-1 overflow-y-auto px-4 pb-4">
+          {/* Assessment (scrolls with content) */}
+          <div className="pt-1 pb-2">
+            <div className="space-y-2">
+              <div className="text-xs text-muted-foreground">Assessment</div>
+              <p className="text-sm text-foreground leading-relaxed">
+                Customer seems calm, but has potential to become frustrated. Likely non-technical as she hasn't read the
+                instruction on her medicine.
+              </p>
+            </div>
+          </div>
+
           {activeTab === "summary" ? (
             <div className="space-y-4">
               {/* AI Summary */}
@@ -563,29 +359,27 @@ export function VoicemailDetail({ item, onClose, onStatusChange }: VoicemailDeta
           ) : (
             <div className="space-y-4">
               {/* Transcription */}
-              {(() => {
-                const parsed = parseTranscriptLines(item.transcript)
-                if (!parsed) {
-                  return (
-                    <p className="text-sm text-muted-foreground">
-                      Transcript format not recognized.
-                    </p>
-                  )
-                }
-
-                return parsed.map((line, idx) => (
+              {!parsedTranscript ? (
+                <p className="text-sm text-muted-foreground">Transcript format not recognized.</p>
+              ) : (
+                parsedTranscript.map((line, idx) => (
                   <div key={idx} className="space-y-1">
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <span className="tabular-nums">{line.time}</span>
                       <span className="text-muted-foreground">•</span>
-                      <span className={cn("font-medium", /caller/i.test(line.who) ? "text-muted-foreground" : "text-sidebar-bg")}>
+                      <span
+                        className={cn(
+                          "font-medium",
+                          /caller/i.test(line.who) ? "text-muted-foreground" : "text-sidebar-bg",
+                        )}
+                      >
                         {line.who}
                       </span>
                     </div>
                     <p className="text-sm text-foreground leading-relaxed">{line.text}</p>
                   </div>
                 ))
-              })()}
+              )}
             </div>
           )}
         </div>
@@ -651,14 +445,7 @@ export function VoicemailDetail({ item, onClose, onStatusChange }: VoicemailDeta
             </Button>
 
             <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-9"
-                onClick={() => onStatusChange(item.id, "Waiting")}
-              >
-                Set waiting
-              </Button>
+            
               <Button
                 variant="outline"
                 size="sm"

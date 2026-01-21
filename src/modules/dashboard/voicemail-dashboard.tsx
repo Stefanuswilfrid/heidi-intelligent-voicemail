@@ -2,10 +2,10 @@
 
 import { useState } from "react"
 import { VoicemailList } from "./voicemail-list"
-import { VoicemailDetail } from "./voicemail-detail"
 import { Sidebar } from "./sidebar"
 import type { WorkItem } from "@/lib/types"
 import { mockWorkItems } from "@/lib/mock-data"
+import { VoicemailDetail } from "./voicemail-detail"
 
 export function VoicemailDashboard() {
   const [selectedItem, setSelectedItem] = useState<WorkItem | null>(null)
@@ -18,7 +18,8 @@ export function VoicemailDashboard() {
     if (filter === "today") return item.urgency === "Today" && item.status !== "Done"
     if (filter === "routine") return item.urgency === "Routine" && item.status !== "Done"
     if (filter === "needs-review") return item.confidence === "Low" && item.status !== "Done"
-    if (filter === "done") return item.status === "Done"
+    if (filter === "auto-resolved") return item.status === "Done" && item.handledBy === "Automation"
+    if (filter === "done") return item.status === "Done" && item.handledBy !== "Automation"
     if (filter === "archived") return false
     return true
   })
@@ -37,7 +38,8 @@ export function VoicemailDashboard() {
           today: workItems.filter((i) => i.urgency === "Today" && i.status !== "Done").length,
           routine: workItems.filter((i) => i.urgency === "Routine" && i.status !== "Done").length,
           needsReview: workItems.filter((i) => i.confidence === "Low" && i.status !== "Done").length,
-          done: workItems.filter((i) => i.status === "Done").length,
+          autoResolved: workItems.filter((i) => i.status === "Done" && i.handledBy === "Automation").length,
+          done: workItems.filter((i) => i.status === "Done" && i.handledBy !== "Automation").length,
         }}
       />
       <div className="flex flex-1 overflow-hidden">

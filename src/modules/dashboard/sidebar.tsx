@@ -1,6 +1,6 @@
 "use client"
 
-import { Search, Inbox, Users, UserCheck, FileText, Archive, Trash2, Phone, ChevronDown } from "lucide-react"
+import { Search, Inbox, Users, UserCheck, FileText, Archive,  CheckCircle2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface SidebarProps {
@@ -11,6 +11,7 @@ interface SidebarProps {
     today: number
     routine: number
     needsReview: number
+    autoResolved: number
     done: number
   }
 }
@@ -21,8 +22,10 @@ export function Sidebar({ currentFilter, onFilterChange, counts }: SidebarProps)
   const mainFilters = [
     { id: "urgent", label: "Urgent", icon: UserCheck, count: counts.urgent },
     { id: "needs-review", label: "Needs Review", icon: Users, count: counts.needsReview },
-    { id: "done", label: "Auto Resolved", icon: FileText, count: counts.done },
+    { id: "auto-resolved", label: "Auto Resolved", icon: FileText, count: counts.autoResolved },
     { id: "all", label: "My Inbox", icon: Inbox, count: totalActive },
+    { id: "done", label: "Done", icon: CheckCircle2, count: counts.done },
+
     { id: "archived", label: "Archived", icon: Archive, count: 0 },
   ]
 
@@ -109,50 +112,6 @@ export function Sidebar({ currentFilter, onFilterChange, counts }: SidebarProps)
               </button>
             )
           })}
-        </div>
-
-        {/* Buckets Section */}
-        <div className="mt-6">
-          <div
-            className="px-3 py-1.5 text-xs font-medium uppercase tracking-wider"
-            style={{ color: "var(--sidebar-muted)", opacity: 0.6 }}
-          >
-            Buckets
-          </div>
-          <div className="space-y-0.5 mt-1">
-            {buckets.map((bucket) => {
-              const isActive = currentFilter === bucket.id
-              return (
-                <button
-                  key={bucket.id}
-                  onClick={() => onFilterChange(bucket.id)}
-                  className="w-full flex items-center justify-between px-3 py-1.5 rounded-md text-sm transition-all duration-150"
-                  style={{
-                    backgroundColor: isActive ? "var(--sidebar-active)" : "transparent",
-                    color: isActive ? "var(--sidebar-foreground)" : "var(--sidebar-muted)",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isActive) e.currentTarget.style.backgroundColor = "var(--sidebar-hover)"
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive) e.currentTarget.style.backgroundColor = "transparent"
-                  }}
-                >
-                  <span>{bucket.label}</span>
-                  {bucket.count > 0 && (
-                    <span
-                      className="text-xs"
-                      style={{
-                        color: isActive ? "var(--sidebar-foreground)" : "var(--sidebar-muted)",
-                      }}
-                    >
-                      {bucket.count}
-                    </span>
-                  )}
-                </button>
-              )
-            })}
-          </div>
         </div>
       </nav>
 

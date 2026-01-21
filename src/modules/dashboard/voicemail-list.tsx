@@ -3,27 +3,13 @@
 import { cn } from "@/lib/utils"
 import type { WorkItem } from "@/lib/types"
 import { getIntentIcon, getIntentLabel } from "@/lib/intent-utils"
+import { formatRelativeTime } from "@/lib/time-utils"
 import { Check, Bot } from "lucide-react"
 
 interface VoicemailListProps {
   items: WorkItem[]
   selectedId?: string
   onSelectItem: (item: WorkItem) => void
-}
-
-function getRelativeTime(receivedAt: string): string {
-  const received = new Date(receivedAt)
-  const now = new Date()
-  const diffMinutes = Math.floor((now.getTime() - received.getTime()) / (1000 * 60))
-
-  if (diffMinutes < 60) {
-    return `${diffMinutes}m ago`
-  } else if (diffMinutes < 1440) {
-    const hours = Math.floor(diffMinutes / 60)
-    return `${hours}h ago`
-  } else {
-    return received.toLocaleDateString([], { month: "short", day: "numeric" })
-  }
 }
 
 export function VoicemailList({ items, selectedId, onSelectItem }: VoicemailListProps) {
@@ -68,7 +54,7 @@ export function VoicemailList({ items, selectedId, onSelectItem }: VoicemailList
             >
               <div className="flex gap-3">
                 {/* Urgency Dot */}
-                <div className="pt-1.5 flex-shrink-0">
+                <div className="pt-1.5 shrink-0">
                   <div
                     className={cn(
                       "h-2 w-2 rounded-full",
@@ -86,8 +72,8 @@ export function VoicemailList({ items, selectedId, onSelectItem }: VoicemailList
                     <h3 className="text-sm font-semibold text-foreground truncate">
                       {item.extractedDetails.patientName || "Unknown caller"}
                     </h3>
-                    <span className="text-xs text-muted-foreground ml-2 flex-shrink-0">
-                      {getRelativeTime(item.receivedAt)}
+                    <span className="text-xs text-muted-foreground ml-2 shrink-0">
+                      {formatRelativeTime(item.receivedAt, "short")}
                     </span>
                   </div>
 
@@ -100,7 +86,7 @@ export function VoicemailList({ items, selectedId, onSelectItem }: VoicemailList
                     )}
                     <span className="text-xs text-muted-foreground truncate">{item.summary.slice(0, 40)}...</span>
                     {item.status === "New" && (
-                      <span className="flex-shrink-0 h-2 w-2 rounded-full bg-red-500" />
+                      <span className="shrink-0 h-2 w-2 rounded-full bg-red-500" />
                     )}
                   </div>
 

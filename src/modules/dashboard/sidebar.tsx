@@ -1,167 +1,170 @@
 "use client"
 
-import { AlertCircle, Clock, CheckCircle2, AlertTriangle } from "lucide-react"
+import { Search, Inbox, Users, UserCheck, FileText, Archive, Trash2, Phone, ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useEffect, useState } from "react"
 
 interface SidebarProps {
   currentFilter: string
   onFilterChange: (filter: string) => void
   counts: {
-    needsAction: number
+    urgent: number
+    today: number
+    routine: number
     needsReview: number
-    autoResolved: number
-    all: number
+    done: number
   }
 }
 
 export function Sidebar({ currentFilter, onFilterChange, counts }: SidebarProps) {
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+  const totalActive = counts.urgent + counts.today + counts.routine
 
-  useEffect(() => {
-    setLastUpdated(new Date())
-    const id = window.setInterval(() => setLastUpdated(new Date()), 60_000)
-    return () => window.clearInterval(id)
-  }, [])
+  const mainFilters = [
+    { id: "all", label: "My Inbox", icon: Inbox, count: totalActive },
+    { id: "needs-review", label: "Needs Review", icon: Users, count: counts.needsReview },
+    { id: "urgent", label: "Urgent", icon: UserCheck, count: counts.urgent },
+    { id: "done", label: "Completed", icon: FileText, count: counts.done },
+    { id: "archived", label: "Archived", icon: Archive, count: 0 },
+  ]
 
-  const filters = [
-    {
-      id: "needs-action",
-      label: "Needs Action",
-      icon: AlertCircle,
-      count: counts.needsAction,
-      color: "text-red-600",
-      hintTitle: "Items needing staff action",
-      hintBody: "Voicemails that require someone to respond or progress the task.",
-    },
-    {
-      id: "needs-review",
-      label: "Needs Review",
-      icon: AlertTriangle,
-      count: counts.needsReview,
-      color: "text-amber-700",
-      hintTitle: "Low confidence items",
-      hintBody: "The system isn’t sure—review the details and decide the next step.",
-    },
-    {
-      id: "auto-resolved",
-      label: "Auto-Resolved",
-      icon: CheckCircle2,
-      count: counts.autoResolved,
-      color: "text-emerald-700",
-      hintTitle: "Handled automatically",
-      hintBody: "Resolved by the system through knowledge base (SOP, Product ListStart, FAQ, Business Docs). No staff work needed.",
-    },
-    {
-      id: "all",
-      label: "All",
-      icon: Clock,
-      count: counts.all,
-      hintTitle: "Everything",
-      hintBody: "All voicemails and actions across every bucket.",
-    },
+  const buckets = [
+    { id: "today", label: "Today", count: counts.today },
+    { id: "routine", label: "Routine", count: counts.routine },
   ]
 
   return (
-    <aside className="w-72 border-r border-border bg-card flex flex-col">
-      <div className="p-5 border-b border-border">
-        <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-primary grid place-items-center border border-border">
-            <span className="text-sm font-black text-primary-foreground">H</span>
-          </div>
-          <div className="min-w-0">
-            <h1 className="text-base font-semibold text-foreground leading-tight">Heidi Calls</h1>
-            <p className="text-xs text-muted-foreground mt-0.5">Voicemail triage</p>
+    <aside className="w-52 flex flex-col" style={{ backgroundColor: "var(--sidebar-bg)" }}>
+      {/* Logo */}
+      <div className="px-4 py-4">
+        <div className="flex items-center gap-2">
+          
+          <div className="flex items-center gap-1">
+            <span
+              className="text-sm font-semibold"
+              style={{
+                color: "var(--sidebar-foreground)",
+                fontFamily:
+                  '"Exposure", var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial',
+              }}
+            >
+              Heidi Calls
+            </span>
           </div>
         </div>
       </div>
 
-      <nav className="flex-1 p-4">
-        <div className="mb-3 px-2 flex items-center justify-between">
-          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Inbox</span>
-          <span className="text-xs text-muted-foreground">
-            {counts.needsAction} needs action
-          </span>
-        </div>
-        <div className="space-y-1">
-        {filters.map((filter) => {
-          const Icon = filter.icon
-          const isActive = currentFilter === filter.id
-          return (
-            <div key={filter.id} className="relative group">
+      {/* Search */}
+      <div className="px-3 mb-2">
+        <button
+          className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors"
+          style={{ color: "var(--sidebar-muted)" }}
+        >
+          <Search className="h-4 w-4" />
+          <span>Search</span>
+          <span className="ml-auto text-xs opacity-50">⌘K</span>
+        </button>
+      </div>
+
+      {/* Main Navigation */}
+      <nav className="flex-1 px-2">
+        <div className="space-y-0.5">
+          {mainFilters.map((filter, index) => {
+            const Icon = filter.icon
+            const isActive = currentFilter === filter.id
+            return (
               <button
+                key={filter.id}
                 onClick={() => onFilterChange(filter.id)}
                 className={cn(
-                  "w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-colors border",
-                  isActive
-                    ? "bg-primary/90 text-primary-foreground border-primary"
-                    : "text-foreground border-transparent hover:bg-muted",
+                  "w-full flex items-center justify-between px-3 py-1.5 rounded-md text-sm transition-all duration-150",
+                  "opacity-0 animate-slide-in-left",
                 )}
+                style={{
+                  animationDelay: `${index * 0.03}s`,
+                  animationFillMode: "forwards",
+                  backgroundColor: isActive ? "var(--sidebar-active)" : "transparent",
+                  color: isActive ? "var(--sidebar-foreground)" : "var(--sidebar-muted)",
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive) e.currentTarget.style.backgroundColor = "var(--sidebar-hover)"
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) e.currentTarget.style.backgroundColor = "transparent"
+                }}
               >
-                <span className="flex items-center gap-3">
-                  <span
-                    className={cn(
-                      "h-8 w-8 rounded-lg grid place-items-center border",
-                      isActive
-                        ? "bg-primary-foreground/10 border-primary-foreground/20"
-                        : "bg-background border-border",
-                    )}
-                  >
-                    <Icon className={cn("h-4 w-4", isActive ? "text-primary-foreground" : filter.color)} />
-                  </span>
-                  <span className="truncate">{filter.label}</span>
+                <span className="flex items-center gap-2.5">
+                  <Icon className="h-4 w-4" />
+                  {filter.label}
                 </span>
                 {filter.count > 0 && (
                   <span
-                    className={cn(
-                      "px-2 py-0.5 rounded-full text-xs font-semibold border",
-                      isActive
-                        ? "bg-primary-foreground/10 text-primary-foreground border-primary-foreground/20"
-                        : "bg-muted text-muted-foreground border-border",
-                    )}
+                    className="min-w-[20px] h-5 flex items-center justify-center rounded text-xs font-medium"
+                    style={{
+                      backgroundColor: isActive ? "var(--primary)" : "transparent",
+                      color: isActive ? "var(--primary-foreground)" : "var(--sidebar-muted)",
+                    }}
                   >
                     {filter.count}
                   </span>
                 )}
               </button>
+            )
+          })}
+        </div>
 
-              {/* Hover preview card (like your reference) */}
-              <div
-                className={cn(
-                  "pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 w-80 rounded-2xl border border-border bg-card shadow-xl",
-                  "opacity-0 translate-x-1 invisible transition-all duration-150",
-                  "group-hover:opacity-100 group-hover:translate-x-0 group-hover:visible",
-                  "group-focus-within:opacity-100 group-focus-within:translate-x-0 group-focus-within:visible",
-                  "z-50",
-                )}
-              >
-                <div className="p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="h-10 w-10 rounded-2xl bg-primary/20 border border-primary/30 grid place-items-center shrink-0">
-                      <Icon className={cn("h-5 w-5", filter.color)} />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-semibold text-foreground truncate">{filter.hintTitle}</p>
-                        <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-muted text-muted-foreground border border-border">
-                          {filter.count}
-                        </span>
-                      </div>
-                      <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{filter.hintBody}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )
-        })}
+        {/* Buckets Section */}
+        <div className="mt-6">
+          <div
+            className="px-3 py-1.5 text-xs font-medium uppercase tracking-wider"
+            style={{ color: "var(--sidebar-muted)", opacity: 0.6 }}
+          >
+            Buckets
+          </div>
+          <div className="space-y-0.5 mt-1">
+            {buckets.map((bucket) => {
+              const isActive = currentFilter === bucket.id
+              return (
+                <button
+                  key={bucket.id}
+                  onClick={() => onFilterChange(bucket.id)}
+                  className="w-full flex items-center justify-between px-3 py-1.5 rounded-md text-sm transition-all duration-150"
+                  style={{
+                    backgroundColor: isActive ? "var(--sidebar-active)" : "transparent",
+                    color: isActive ? "var(--sidebar-foreground)" : "var(--sidebar-muted)",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) e.currentTarget.style.backgroundColor = "var(--sidebar-hover)"
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) e.currentTarget.style.backgroundColor = "transparent"
+                  }}
+                >
+                  <span>{bucket.label}</span>
+                  {bucket.count > 0 && (
+                    <span
+                      className="text-xs"
+                      style={{
+                        color: isActive ? "var(--sidebar-foreground)" : "var(--sidebar-muted)",
+                      }}
+                    >
+                      {bucket.count}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
         </div>
       </nav>
 
-      <div className="p-4 border-t border-border">
-        <p className="text-xs text-muted-foreground">
-          Last updated: {lastUpdated ? lastUpdated.toLocaleTimeString() : "—"}
-        </p>
+      {/* Footer */}
+      <div className="px-4 py-3" style={{ borderTop: "1px solid var(--sidebar-border)" }}>
+        <div className="flex items-center gap-2 text-xs" style={{ color: "var(--sidebar-muted)" }}>
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          </span>
+          <span>Listening for calls</span>
+        </div>
       </div>
     </aside>
   )

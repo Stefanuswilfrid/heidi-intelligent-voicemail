@@ -4,7 +4,6 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Updated color scheme for Heidi Calls voicemail system */
   --primary: #fbf582; /* Warm yellow */
   --primary-foreground: #2a0510; /* Deep burgundy for text on yellow */
   --secondary: #2a0510; /* Deep burgundy */
@@ -25,15 +24,19 @@
 
   --destructive: #dc2626;
   --destructive-foreground: #ffffff;
-  --border: #d4cdc7;
+  --border: #e0d9d4;
   --input: #d4cdc7;
   --ring: #fbf582;
 
-  --urgent: #dc2626;
-  --today: #f59e0b;
-  --routine: #10b981;
-
   --radius: 0.5rem;
+
+  /* Sidebar specific - dark burgundy theme */
+  --sidebar-bg: #2a0510;
+  --sidebar-foreground: #f9f4f1;
+  --sidebar-muted: rgba(249, 244, 241, 0.6);
+  --sidebar-hover: rgba(251, 245, 130, 0.1);
+  --sidebar-active: rgba(251, 245, 130, 0.15);
+  --sidebar-border: rgba(249, 244, 241, 0.1);
 }
 
 .dark {
@@ -119,4 +122,87 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Calmer, more subtle animations */
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.25s ease-out forwards;
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left 0.2s ease-out forwards;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.3s ease-out forwards;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.15s ease-out forwards;
+}
+
+/* Faster stagger for snappier feel */
+.stagger-1 {
+  animation-delay: 0.02s;
+}
+.stagger-2 {
+  animation-delay: 0.04s;
+}
+.stagger-3 {
+  animation-delay: 0.06s;
+}
+.stagger-4 {
+  animation-delay: 0.08s;
+}
+.stagger-5 {
+  animation-delay: 0.1s;
+}
+
+/* Custom border-l-3 utility */
+.border-l-3 {
+  border-left-width: 3px;
 }

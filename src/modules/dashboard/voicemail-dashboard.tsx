@@ -4,28 +4,21 @@ import { useState } from "react"
 import { VoicemailList } from "./voicemail-list"
 import { VoicemailDetail } from "./voicemail-detail"
 import { Sidebar } from "./sidebar"
-import { WorkItem } from "@/lib/types"
+import type { WorkItem } from "@/lib/types"
 import { mockWorkItems } from "@/lib/mock-data"
-
 
 export function VoicemailDashboard() {
   const [selectedItem, setSelectedItem] = useState<WorkItem | null>(null)
-  const [filter, setFilter] = useState<string>("needs-action")
+  const [filter, setFilter] = useState<string>("all")
   const [workItems, setWorkItems] = useState<WorkItem[]>(mockWorkItems)
 
-  const counts = {
-    needsAction: workItems.filter((i) => i.status !== "Done" && i.confidence !== "Low").length,
-    needsReview: workItems.filter((i) => i.confidence === "Low" && i.status !== "Done").length,
-    autoResolved: workItems.filter((i) => i.handledBy === "Automation" && i.status === "Done").length,
-    all: workItems.length,
-  }
-
   const filteredItems = workItems.filter((item) => {
-    if (filter === "needs-action")
-      return item.status !== "Done" && item.confidence !== "Low"
+    if (filter === "all") return item.status !== "Done"
+    if (filter === "urgent") return item.urgency === "Urgent" && item.status !== "Done"
+    if (filter === "today") return item.urgency === "Today" && item.status !== "Done"
+    if (filter === "routine") return item.urgency === "Routine" && item.status !== "Done"
     if (filter === "needs-review") return item.confidence === "Low" && item.status !== "Done"
-    if (filter === "auto-resolved") return item.handledBy === "Automation" && item.status === "Done"
-    if (filter === "all") return true
+    if (filter === "done") return item.status === "Done"
     return true
   })
 
@@ -38,16 +31,34 @@ export function VoicemailDashboard() {
       <Sidebar
         currentFilter={filter}
         onFilterChange={setFilter}
-        counts={counts}
+        counts={{
+          urgent: workItems.filter((i) => i.urgency === "Urgent" && i.status !== "Done").length,
+          today: workItems.filter((i) => i.urgency === "Today" && i.status !== "Done").length,
+          routine: workItems.filter((i) => i.urgency === "Routine" && i.status !== "Done").length,
+          needsReview: workItems.filter((i) => i.confidence === "Low" && i.status !== "Done").length,
+          done: workItems.filter((i) => i.status === "Done").length,
+        }}
       />
       <div className="flex flex-1 overflow-hidden">
         <VoicemailList items={filteredItems} selectedId={selectedItem?.id} onSelectItem={setSelectedItem} />
-        {selectedItem && (
+        {selectedItem ? (
           <VoicemailDetail
             item={selectedItem}
             onClose={() => setSelectedItem(null)}
             onStatusChange={handleStatusChange}
           />
+        ) : (
+          <div className="flex-1 flex items-center justify-center bg-card">
+            <div className="text-center animate-fade-in-up">
+              <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                <svg className="h-8 w-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <p className="text-sm font-medium text-foreground">Select a voicemail</p>
+              <p className="text-xs text-muted-foreground mt-1">Choose a message from your inbox to view details</p>
+            </div>
+          </div>
         )}
       </div>
     </div>

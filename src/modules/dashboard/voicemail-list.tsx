@@ -3,8 +3,7 @@
 import { cn } from "@/lib/utils"
 import type { WorkItem } from "@/lib/types"
 import { getIntentIcon, getIntentLabel } from "@/lib/intent-utils"
-import { Clock } from "lucide-react"
-import { useEffect, useState } from "react"
+import { Check, Bot } from "lucide-react"
 
 interface VoicemailListProps {
   items: WorkItem[]
@@ -12,105 +11,133 @@ interface VoicemailListProps {
   onSelectItem: (item: WorkItem) => void
 }
 
-function ReceivedAtTime({ iso }: { iso: string }) {
-  const [label, setLabel] = useState<string>("—")
+function getRelativeTime(receivedAt: string): string {
+  const received = new Date(receivedAt)
+  const now = new Date()
+  const diffMinutes = Math.floor((now.getTime() - received.getTime()) / (1000 * 60))
 
-  useEffect(() => {
-    const d = new Date(iso)
-    setLabel(d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }))
-  }, [iso])
-
-  return (
-    <span suppressHydrationWarning className="tabular-nums">
-      {label}
-    </span>
-  )
+  if (diffMinutes < 60) {
+    return `${diffMinutes}m ago`
+  } else if (diffMinutes < 1440) {
+    const hours = Math.floor(diffMinutes / 60)
+    return `${hours}h ago`
+  } else {
+    return received.toLocaleDateString([], { month: "short", day: "numeric" })
+  }
 }
 
 export function VoicemailList({ items, selectedId, onSelectItem }: VoicemailListProps) {
   if (items.length === 0) {
     return (
-      <div className="flex-1 flex items-center justify-center border-r border-border bg-background">
-        <div className="text-center">
-          <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-          <p className="text-lg font-medium text-foreground">All caught up!</p>
-          <p className="text-sm text-muted-foreground mt-1">No voicemails to review</p>
+      <div className="w-80 flex items-center justify-center border-r border-border bg-card">
+        <div className="text-center animate-fade-in-up">
+          <div className="h-12 w-12 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-3">
+            <Check className="h-6 w-6 text-emerald-600" />
+          </div>
+          <p className="text-sm font-semibold text-foreground">All caught up</p>
+          <p className="text-xs text-muted-foreground mt-1">No voicemails to review</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="flex-1 border-r border-border overflow-y-auto bg-background">
-      <div className="p-4 border-b border-border bg-card sticky top-0 z-10">
-        <h2 className="text-lg font-semibold text-foreground">Voicemails ({items.length})</h2>
+    <div className="w-80 border-r border-border bg-card flex flex-col">
+      {/* Header */}
+      <div className="px-4 py-3 border-b border-border">
+        <h2 className="text-sm font-semibold text-foreground">Your Inbox</h2>
       </div>
 
-      <div className="divide-y divide-border">
-        {items.map((item) => {
+      {/* List */}
+      <div className="flex-1 overflow-y-auto">
+        {items.map((item, index) => {
           const Icon = getIntentIcon(item.intent)
-          const isAutoResolved = item.handledBy === "Automation" && item.status === "Done"
-          const urgencyColor =
-            item.urgency === "Urgent"
-              ? "bg-red-100 text-red-800 border-red-200"
-              : item.urgency === "Today"
-                ? "bg-amber-100 text-amber-800 border-amber-200"
-                : "bg-emerald-100 text-emerald-800 border-emerald-200"
+          const isSelected = selectedId === item.id
+          const staggerClass = `stagger-${Math.min(index + 1, 5)}`
 
           return (
             <button
               key={item.id}
               onClick={() => onSelectItem(item)}
               className={cn(
-                "w-full p-4 text-left transition-colors hover:bg-muted",
-                selectedId === item.id && "bg-accent/10 border-l-4 border-l-secondary",
+                "w-full text-left px-4 py-3 border-b border-border transition-all duration-150",
+                "opacity-0 animate-fade-in-up",
+                staggerClass,
+                isSelected ? "bg-muted/70" : "hover:bg-muted/30",
               )}
             >
-              <div className="flex items-start gap-3">
-                {isAutoResolved ? (
-                  <div className="px-2 py-1 rounded-md text-xs font-semibold border bg-emerald-100 text-emerald-800 border-emerald-200">
-                    Auto-resolved
-                  </div>
-                ) : (
-                  <div className={cn("px-2 py-1 rounded-md text-xs font-semibold border", urgencyColor)}>
-                    {item.urgency}
-                  </div>
-                )}
+              <div className="flex gap-3">
+                {/* Urgency Dot */}
+                <div className="pt-1.5 flex-shrink-0">
+                  <div
+                    className={cn(
+                      "h-2 w-2 rounded-full",
+                      item.urgency === "Urgent" && "bg-red-500",
+                      item.urgency === "Today" && "bg-amber-500",
+                      item.urgency === "Routine" && "bg-emerald-500",
+                    )}
+                  />
+                </div>
 
+                {/* Content */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
-                    <span className="text-xs font-medium text-muted-foreground">{getIntentLabel(item.intent)}</span>
-                    {item.confidence === "Low" && (
-                      <span className="text-xs text-amber-600 font-medium">Low confidence</span>
+                  {/* Title Row */}
+                  <div className="flex items-center justify-between mb-1">
+                    <h3 className="text-sm font-semibold text-foreground truncate">
+                      {item.extractedDetails.patientName || "Unknown caller"}
+                    </h3>
+                    <span className="text-xs text-muted-foreground ml-2 flex-shrink-0">
+                      {getRelativeTime(item.receivedAt)}
+                    </span>
+                  </div>
+
+                  {/* Status Badge Row */}
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    {item.status === "New" && (
+                      <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/20 text-secondary">
+                        <Bot className="h-2.5 w-2.5" />
+                      </span>
+                    )}
+                    <span className="text-xs text-muted-foreground truncate">{item.summary.slice(0, 40)}...</span>
+                    {item.status === "New" && (
+                      <span className="flex-shrink-0 h-2 w-2 rounded-full bg-red-500" />
                     )}
                   </div>
 
-                  <h3 className="font-semibold text-foreground mb-1 text-balance">
-                    {item.extractedDetails.patientName || "Unknown caller"}
-                  </h3>
-
-                  <p className="text-sm text-muted-foreground mb-2 line-clamp-2 text-pretty">{item.summary}</p>
-
-                  {item.missingInfo.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mb-2">
-                      {item.missingInfo.slice(0, 2).map((info) => (
-                        <span
-                          key={info}
-                          className="px-2 py-0.5 bg-amber-50 text-amber-700 text-xs rounded border border-amber-200"
-                        >
-                          Missing: {info}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span className="font-medium text-secondary">→ {item.recommendedNextStep}</span>
-                    <ReceivedAtTime iso={item.receivedAt} />
+                  {/* Tags Row */}
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span
+                      className={cn(
+                        "px-1.5 py-0.5 rounded text-[10px] font-medium",
+                        item.urgency === "Urgent" && "bg-red-100 text-red-700",
+                        item.urgency === "Today" && "bg-amber-100 text-amber-700",
+                        item.urgency === "Routine" && "bg-emerald-100 text-emerald-700",
+                      )}
+                    >
+                      {item.urgency}
+                    </span>
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground flex items-center gap-0.5">
+                      <Icon className="h-2.5 w-2.5" />
+                      {getIntentLabel(item.intent)}
+                    </span>
+                    {item.confidence === "Low" && (
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-700">
+                        Review
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
+
+              {/* Processing indicator */}
+              {item.status === "In progress" && (
+                <div className="flex items-center gap-1.5 mt-2 ml-5">
+                  <div className="h-5 w-5 rounded-full bg-muted flex items-center justify-center">
+                    <span className="text-[10px] font-medium text-muted-foreground">HC</span>
+                  </div>
+                  <span className="text-[10px] text-primary font-medium">Heidi is responding...</span>
+                </div>
+              )}
             </button>
           )
         })}

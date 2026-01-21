@@ -28,61 +28,44 @@ export const mockWorkItems: WorkItem[] = [
   },
   {
     id: "2",
-    intent: "Test results",
-    urgency: "Today",
+    intent: "Billing / admin",
+    urgency: "Routine",
     summary:
       "Summary of what I completed\n" +
-      "1. Referenced the patient’s appointment history and recent test order.\n" +
-      "2. Found the results are still pending.\n" +
-      "3. Informed the caller results are expected within 1 business day (no callback needed).",
+      "1. Verified the caller (phone number, policy number, and date of birth) to reduce scam risk.\n" +
+      "2. Reviewed the recent chat history to understand the customer’s discount question.\n" +
+      "3. Checked the customer profile and insurance eligibility.\n" +
+      "4. Confirmed a $20 discount applies to the next appointment and informed the customer (no callback needed).",
     extractedDetails: {
       patientName: "Michael Torres",
       phone: "555-0456",
-      clinician: "Dr. Chen",
+      clinician: "Billing team",
     },
     confidence: "High",
     missingInfo: [],
-    recommendedNextStep: "Auto-resolved: informed caller results are pending (expected within 1 business day)",
+    recommendedNextStep: "Auto-resolved: discount eligibility confirmed; no staff action needed",
     status: "Done",
     handledBy: "Automation",
     receivedAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
     transcript:
       `[10:12] Sunset GP Team: Hi, this is Alex from Sunset GP. How can I help?\n` +
-      `[10:12] Caller: Hi, this is Michael Torres. I’m calling about my blood work results from last week.\n` +
-      `[10:13] Sunset GP Team: Thanks — I can see your recent blood test order with Dr. Chen.\n` +
-      `[10:13] Sunset GP Team: Your results aren’t available yet. They’re expected to come through within 1 business day.\n` +
-      `[10:14] Sunset GP Team: If you haven’t received an update after that, reply here and we’ll follow up.\n` +
-      `[10:14] Caller: Okay, thank you.\n` +
+      `[10:12] Caller: Hi, I’m Michael Torres. Do I have a discount for my next appointment?\n` +
+      `[10:13] Sunset GP Team: Sure — before I check, can you confirm your phone number, policy number, and date of birth?\n` +
+      `[10:13] Caller: Phone 555-0456, policy P-19384, DOB 1990-02-14.\n` +
+      `[10:14] Sunset GP Team: Thanks for confirming. Based on your insurance, you have a $20 discount applied to your next appointment.\n` +
+      `[10:15] Caller: Okay, thank you.\n` +
       `[10:15] Sunset GP Team: You’re welcome — anything else I can help with?`,
   },
-  {
-    id: "3",
-    intent: "Book appointment",
-    urgency: "Routine",
-    summary: "New patient requesting initial consultation. Flexible on timing, prefers morning appointments next week.",
-    extractedDetails: {
-      patientName: "Jennifer Park",
-      phone: "555-0789",
-      preferredTime: "Morning, next week",
-    },
-    confidence: "High",
-    missingInfo: [],
-    recommendedNextStep: "Schedule appointment for next week morning",
-    status: "New",
-    receivedAt: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
-    transcript:
-      `[08:25] Sunset GP Team: Hi, this is Alex from Sunset GP. How can I help?\n` +
-      `[08:25] Caller: Hi, I’m Jennifer Park. I’d like to schedule an initial consultation.\n` +
-      `[08:27] Sunset GP Team: And what time works best?\n` +
-      `[08:27] Caller: Morning appointments next week if possible.\n` +
-      `[08:28] Sunset GP Team: Thanks — we’ll call you back to confirm.`,
-  },
+
   {
     id: "7",
     intent: "Other / unclear",
     urgency: "Routine",
     summary:
-      "Unclear message, caller mentioned something about forms but audio quality was poor. Multiple topics discussed.",
+      "Summary of what I completed\n" +
+      "1. Detected poor audio quality and an unclear multi-topic message.\n" +
+      "2. Identified missing key details (name, request, DOB, callback number).\n" +
+      "3. Routed to Needs Review for manual clarification.",
     extractedDetails: {},
     confidence: "Low",
     missingInfo: ["Patient name", "Specific request", "Date of birth", "Phone number"],
@@ -104,9 +87,11 @@ export const mockWorkItems: WorkItem[] = [
     summary:
       "Summary of what I completed\n" +
       "1. Customer asked whether the clinic provides travel vaccines.\n" +
-      "2. Scanned the FAQs document in the knowledge base for service provided by the clinic.\n" +
-      "3. Responded with the clinic’s service information and next steps.\n" +
-      "4. Customer acknowledged with 'okay, thank you'",
+      "2. Scanned the FAQs document in the knowledge base for services provided by the clinic.\n" +
+      "3. Responded with the clinic’s service information.\n" +
+      "4. Customer asked for opening hours.\n" +
+      "5. Scanned the FAQs document for clinic hours and provided them.\n" +
+      "6. Customer acknowledged with 'okay, thank you'",
     extractedDetails: {},
     confidence: "High",
     missingInfo: [],
@@ -117,11 +102,12 @@ export const mockWorkItems: WorkItem[] = [
     transcript:
       `[15:26] Sunset GP Team: Hi, this is Alex from Sunset GP. How can I help?\n` +
       `[15:26] Caller: Hi — do you provide travel vaccines?\n` +
-      `[15:27] Sunset GP Team: Let me check our business info documents.\n` +
       `[15:27] Sunset GP Team: Yes — we provide common travel vaccines.\n` +
       `[15:27] Sunset GP Team: If you share your destination and travel date, we can advise what you need. You can also book online or call reception.\n` +
-      `[15:28] Caller: Okay, thank you.\n` +
-      `[15:28] Sunset GP Team: You’re welcome — anything else I can help with?`,
+      `[15:28] Caller: What are your hours?\n` +
+      `[15:29] Sunset GP Team: We’re open 7:00 AM–8:30 PM daily.\n` +
+      `[15:29] Caller: Okay, thank you.\n` +
+      `[15:29] Sunset GP Team: You’re welcome — anything else I can help with?`,
   },
   {
     id: "11",
@@ -170,7 +156,7 @@ export const mockWorkItems: WorkItem[] = [
     confidence: "Low",
     missingInfo: [],
     recommendedNextStep: "Needs review: respond without disclosing system details; offer a callback instead",
-    status: "Waiting",
+    status: "New",
     handledBy: "Automation",
     receivedAt: new Date(Date.now() - 1000 * 60 * 6).toISOString(),
     transcript:

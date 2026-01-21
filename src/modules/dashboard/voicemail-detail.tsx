@@ -373,7 +373,10 @@ export function VoicemailDetail({ item, onClose, onStatusChange }: VoicemailDeta
             <div className="bg-primary/15 rounded-2xl p-4 border border-primary/40">
               <h4 className="text-sm font-semibold text-secondary mb-1">Recommended Next Step</h4>
               <p className="text-sm text-secondary font-semibold">{item.recommendedNextStep}</p>
-              {item.status === "Waiting" && (
+              {item.status === "Waiting" &&
+                /practitioner|approved|approval|confirmation/i.test(
+                  `${item.recommendedNextStep}\n${item.summary}`,
+                ) && (
                 <p className="text-xs text-muted-foreground mt-2">
                   ⏳ Awaiting practitioner confirmation (after-hours)
                 </p>

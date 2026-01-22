@@ -8,9 +8,14 @@ export function useTranscriptTts({ text, itemId }: { text: string; itemId: strin
   const [hasUtterance, setHasUtterance] = useState(false)
   const [rate, setRate] = useState<Rate>(1)
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
+  const isMountedRef = useRef(true)
 
   useEffect(() => {
+    isMountedRef.current = true
     setTtsSupported(typeof window !== "undefined" && "speechSynthesis" in window)
+    return () => {
+      isMountedRef.current = false
+    }
   }, [])
 
   // Reset TTS when switching items
@@ -35,62 +40,103 @@ export function useTranscriptTts({ text, itemId }: { text: string; itemId: strin
   const startTts = useCallback(() => {
     if (!(typeof window !== "undefined" && "speechSynthesis" in window)) return
 
-    // Restart cleanly each time to keep the UI simple/predictable.
-    window.speechSynthesis.cancel()
+    const synth = window.speechSynthesis
+
+    // Cancel any ongoing speech first
+    synth.cancel()
+    
+    // Chrome bug workaround: need to resume if paused
+    if (synth.paused) {
+      synth.resume()
+    }
+
     const u = new SpeechSynthesisUtterance(text)
     u.rate = rate
+
+    u.onstart = () => {
+      if (isMountedRef.current) {
+        setIsPlaying(true)
+        setHasUtterance(true)
+      }
+    }
+
     u.onend = () => {
-      utteranceRef.current = null
-      setIsPlaying(false)
-      setHasUtterance(false)
+      if (isMountedRef.current) {
+        utteranceRef.current = null
+        setIsPlaying(false)
+        setHasUtterance(false)
+      }
     }
-    u.onerror = () => {
-      utteranceRef.current = null
-      setIsPlaying(false)
-      setHasUtterance(false)
+
+    u.onerror = (e) => {
+      // Ignore 'interrupted' errors which happen on cancel
+      if (e.error === 'interrupted') return
+      if (isMountedRef.current) {
+        utteranceRef.current = null
+        setIsPlaying(false)
+        setHasUtterance(false)
+      }
     }
+
     utteranceRef.current = u
-    window.speechSynthesis.speak(u)
+    
+    // Set state immediately for responsive UI
     setIsPlaying(true)
     setHasUtterance(true)
+    
+    synth.speak(u)
   }, [rate, text])
 
   const pauseTts = useCallback(() => {
     if (!(typeof window !== "undefined" && "speechSynthesis" in window)) return
     window.speechSynthesis.pause()
     setIsPlaying(false)
-    setHasUtterance(true)
   }, [])
 
   const resumeTts = useCallback(() => {
     if (!(typeof window !== "undefined" && "speechSynthesis" in window)) return
     window.speechSynthesis.resume()
     setIsPlaying(true)
-    setHasUtterance(true)
   }, [])
 
   const toggleTts = useCallback(() => {
     if (!ttsSupported) return
-    // If we have an utterance that was paused, resume. Otherwise (re)start from beginning.
-    if (utteranceRef.current && typeof window !== "undefined" && window.speechSynthesis.paused) {
-      resumeTts()
-      return
-    }
+    
+    const synth = window.speechSynthesis
+    
+    // If currently playing, pause it
     if (isPlaying) {
       pauseTts()
       return
     }
+    
+    // If we have a paused utterance, resume it
+    if (hasUtterance && synth.paused) {
+      resumeTts()
+      return
+    }
+    
+    // Otherwise start fresh
     startTts()
-  }, [isPlaying, pauseTts, resumeTts, startTts, ttsSupported])
+  }, [isPlaying, hasUtterance, pauseTts, resumeTts, startTts, ttsSupported])
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel()
+      }
+    }
+  }, [])
 
   useEffect(() => {
-    // If rate changes mid-play, restart to apply it (simple behavior).
+    // If rate changes mid-play, restart to apply it
     if (!ttsSupported) return
     if (!utteranceRef.current) return
     if (isPlaying) {
       startTts()
     }
-  }, [isPlaying, rate, startTts, ttsSupported])
+  }, [rate]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return {
     ttsSupported,
@@ -102,5 +148,4 @@ export function useTranscriptTts({ text, itemId }: { text: string; itemId: strin
     stopTts,
   }
 }
-
 

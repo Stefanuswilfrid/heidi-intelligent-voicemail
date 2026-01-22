@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { X, Phone, Sparkles, AudioLines, ChevronDown, CheckCircle2, AlertTriangle, Info, Volume2, Square, PlayIcon,
+import { X, Phone, Sparkles, AudioLines, ChevronDown, CheckCircle2, AlertTriangle, Info, PlayIcon, PauseIcon,
   BrainCircuit,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -30,7 +30,7 @@ export function VoicemailDetail({ item, onClose, onStatusChange }: VoicemailDeta
     [parsedTranscript, item.transcript],
   )
 
-  const { ttsSupported, isPlaying, hasUtterance, rate, setRate, toggleTts, stopTts } = useTranscriptTts({
+  const { ttsSupported, isPlaying, rate, toggleTts } = useTranscriptTts({
     text: ttsText,
     itemId: item.id,
   })
@@ -96,27 +96,52 @@ export function VoicemailDetail({ item, onClose, onStatusChange }: VoicemailDeta
 
         {/* Call Info Card */}
         <div className="p-4">
-          <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
+          <div className={cn(
+            "flex items-center gap-3 p-3 rounded-lg transition-colors",
+            isPlaying ? "bg-primary/10 ring-1 ring-primary/30" : "bg-muted/30"
+          )}>
             <button
-              className="h-10 w-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors"
+              className={cn(
+                "h-10 w-10 rounded-full flex items-center justify-center transition-all",
+                isPlaying 
+                  ? "bg-primary text-primary-foreground hover:bg-primary/90" 
+                  : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/70"
+              )}
               onClick={toggleTts}
               disabled={!ttsSupported}
               aria-label={ttsSupported ? (isPlaying ? "Pause transcript" : "Play transcript") : "Listen not supported"}
               title={ttsSupported ? (isPlaying ? "Pause" : "Listen") : "Listen not supported"}
             >
-              <PlayIcon className="h-4 w-4" />
+              {isPlaying ? <PauseIcon className="h-4 w-4" /> : <PlayIcon className="h-4 w-4" />}
             </button>
             <div className="flex-1">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-foreground">Voice Call</span>
+                <span className="text-sm font-medium text-foreground">
+                  {isPlaying ? "Now Playing" : "Voice Call"}
+                </span>
                 <span className="text-xs text-muted-foreground">{formatTime(item.receivedAt)}</span>
               </div>
               <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-xs font-medium text-sidebar-bg">Heidi AI</span>
-                <span className="text-xs text-muted-foreground">• {formatDuration()}</span>
-                {!ttsSupported && <span className="text-xs text-muted-foreground">• Listen not supported</span>}
-                {ttsSupported && (
-                  <span className="text-xs text-muted-foreground">• {rate}x</span>
+                {isPlaying ? (
+                  <>
+                    <div className="flex items-center gap-0.5">
+                      <span className="w-0.5 h-3 bg-primary rounded-full animate-pulse" style={{ animationDelay: '0ms' }} />
+                      <span className="w-0.5 h-4 bg-primary rounded-full animate-pulse" style={{ animationDelay: '150ms' }} />
+                      <span className="w-0.5 h-2 bg-primary rounded-full animate-pulse" style={{ animationDelay: '300ms' }} />
+                      <span className="w-0.5 h-3 bg-primary rounded-full animate-pulse" style={{ animationDelay: '450ms' }} />
+                    </div>
+                    <span className="text-xs text-foreground">Click to pause</span>
+                    <span className="text-xs text-muted-foreground">• {rate}x</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-xs font-medium text-sidebar-bg">Heidi AI</span>
+                    <span className="text-xs text-muted-foreground">• {formatDuration()}</span>
+                    {!ttsSupported && <span className="text-xs text-muted-foreground">• Listen not supported</span>}
+                    {ttsSupported && (
+                      <span className="text-xs text-muted-foreground">• {rate}x</span>
+                    )}
+                  </>
                 )}
               </div>
             </div>
@@ -444,59 +469,8 @@ export function VoicemailDetail({ item, onClose, onStatusChange }: VoicemailDeta
           )}
         </div>
 
-        {/* Bottom bar: playback controls + reply composer */}
+        {/* Bottom bar: actions */}
         <div className="border-t border-border bg-muted/20">
-          {ttsSupported && hasUtterance && (
-            <div className="px-4 py-2 border-b border-border/60 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={toggleTts}
-                  className="h-8 w-8 rounded-full bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                  aria-label={isPlaying ? "Pause transcript" : "Play transcript"}
-                  title={isPlaying ? "Pause" : "Listen"}
-                >
-                  {isPlaying ? (
-                    <div className="flex items-center gap-1">
-                      <span className="h-3.5 w-1.5 rounded bg-foreground/80" />
-                      <span className="h-3.5 w-1.5 rounded bg-foreground/80" />
-                    </div>
-                  ) : (
-                    <Volume2 className="h-4 w-4" />
-                  )}
-                </button>
-                <span className="text-xs text-muted-foreground">
-                  {isPlaying ? "Listening to transcript" : "Transcript paused"}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1 rounded-md border border-border bg-card/50 p-0.5">
-                  {[1, 1.5, 2].map((r) => (
-                    <button
-                      key={r}
-                      onClick={() => setRate(r as 1 | 1.5 | 2)}
-                      className={cn(
-                        "px-2 py-1 text-[11px] font-medium rounded",
-                        rate === r ? "bg-primary/20 text-sidebar-bg" : "text-muted-foreground hover:text-foreground",
-                      )}
-                      title={`${r}x`}
-                    >
-                      {r}x
-                    </button>
-                  ))}
-                </div>
-                <button
-                  onClick={stopTts}
-                  className="h-8 w-8 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                  aria-label="Stop"
-                  title="Stop"
-                >
-                  <Square className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          )}
-
           {/* Persistent actions */}
           <div className="px-4 py-3">
             <div className="flex items-center justify-between gap-3">

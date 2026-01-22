@@ -1,12 +1,15 @@
 "use client"
 
-import { Search, Inbox, Users, UserCheck, FileText, Archive, CheckCircle2, Stethoscope } from "lucide-react"
+import { Search, Inbox, Users, UserCheck, FileText, Archive, CheckCircle2, Stethoscope, List } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface SidebarProps {
   currentFilter: string
   onFilterChange: (filter: string) => void
+  onSearchClick: () => void
   counts: {
+    inbox: number
+    all: number
     urgent: number
     today: number
     routine: number
@@ -17,17 +20,15 @@ interface SidebarProps {
   }
 }
 
-export function Sidebar({ currentFilter, onFilterChange, counts }: SidebarProps) {
-  const totalActive = counts.urgent + counts.today + counts.routine
-
+export function Sidebar({ currentFilter, onFilterChange, onSearchClick, counts }: SidebarProps) {
   const mainFilters = [
     { id: "urgent", label: "Urgent", icon: UserCheck, count: counts.urgent },
     { id: "needs-review", label: "Needs Review", icon: Users, count: counts.needsReview },
     { id: "triage", label: "Clinical Triage", icon: Stethoscope, count: counts.triage },
     { id: "auto-resolved", label: "Auto Resolved", icon: FileText, count: counts.autoResolved },
-    { id: "all", label: "My Inbox", icon: Inbox, count: totalActive },
+    { id: "inbox", label: "My Inbox", icon: Inbox, count: counts.inbox },
+    { id: "all", label: "All Voicemail", icon: List, count: counts.all },
     { id: "done", label: "Done", icon: CheckCircle2, count: counts.done },
-
     { id: "archived", label: "Archived", icon: Archive, count: 0 },
   ]
 
@@ -56,7 +57,8 @@ export function Sidebar({ currentFilter, onFilterChange, counts }: SidebarProps)
       {/* Search */}
       <div className="px-3 mb-2">
         <button
-          className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors"
+          onClick={onSearchClick}
+          className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors hover:bg-(--sidebar-hover)"
           style={{ color: "var(--sidebar-muted)" }}
         >
           <Search className="h-4 w-4" />

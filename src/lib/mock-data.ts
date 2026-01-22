@@ -115,7 +115,7 @@ export const mockWorkItems: WorkItem[] = [
   {
     id: "11",
     intent: "Book appointment",
-    urgency: "Urgent",
+    urgency: "Today",
     summary:
       "Summary of what I completed\n" +
       "1. Checked today’s vaccine appointment availability and confirmed all practitioners are fully booked.\n" +

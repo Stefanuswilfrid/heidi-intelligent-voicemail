@@ -176,6 +176,15 @@
   }
 }
 
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 .animate-slide-in-right {
   animation: slide-in-right 0.25s ease-out forwards;
 }
@@ -190,6 +199,10 @@
 
 .animate-scale-in {
   animation: scale-in 0.15s ease-out forwards;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.15s ease-out forwards;
 }
 
 /* Faster stagger for snappier feel */
@@ -212,4 +225,13 @@
 /* Custom border-l-3 utility */
 .border-l-3 {
   border-left-width: 3px;
+}
+
+/* Command palette item styles */
+[cmdk-item][data-selected="true"] {
+  background-color: var(--muted);
+}
+
+[cmdk-item]:hover {
+  background-color: color-mix(in srgb, var(--muted) 50%, transparent);
 }

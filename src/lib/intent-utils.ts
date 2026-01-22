@@ -9,7 +9,7 @@ import {
     MessageSquare,
     HelpCircle,
   } from "lucide-react"
-  import type { Intent } from "./types"
+  import type { Intent, Urgency } from "./types"
   
   export function getIntentIcon(intent: Intent) {
     const icons: Record<Intent, typeof Calendar> = {
@@ -28,5 +28,14 @@ import {
   
   export function getIntentLabel(intent: Intent): string {
     return intent
+  }
+
+  export function getUrgencyColor(urgency: Urgency): string {
+    const colors: Record<Urgency, string> = {
+      Urgent: "#dc2626",
+      Today: "#f59e0b",
+      Routine: "#10b981",
+    }
+    return colors[urgency]
   }
   

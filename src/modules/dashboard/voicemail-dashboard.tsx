@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { VoicemailList } from "./voicemail-list"
 import { Sidebar } from "./sidebar"
+import { CommandPalette } from "./command-palette"
 import type { WorkItem } from "@/lib/types"
 import { mockWorkItems } from "@/lib/mock-data"
 import { VoicemailDetail } from "./voicemail-detail"
@@ -11,9 +12,14 @@ export function VoicemailDashboard() {
   const [selectedItem, setSelectedItem] = useState<WorkItem | null>(null)
   const [filter, setFilter] = useState<string>("urgent")
   const [workItems, setWorkItems] = useState<WorkItem[]>(mockWorkItems)
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
 
   const filteredItems = workItems.filter((item) => {
-    if (filter === "all") return item.status !== "Done" && item.status !== "Waiting"
+    if (filter === "all") return true
+    // My Inbox = active, non-triage items that are not urgent and not needs-review.
+    // (With current mock data, this yields just the "Today + High confidence" item.)
+    if (filter === "inbox")
+      return item.status !== "Done" && item.status !== "Waiting" && item.urgency !== "Urgent" && item.confidence !== "Low"
     if (filter === "urgent") return item.urgency === "Urgent" && item.status !== "Done" && item.status !== "Waiting"
     if (filter === "today") return item.urgency === "Today" && item.status !== "Done" && item.status !== "Waiting"
     if (filter === "routine") return item.urgency === "Routine" && item.status !== "Done" && item.status !== "Waiting"
@@ -34,7 +40,12 @@ export function VoicemailDashboard() {
       <Sidebar
         currentFilter={filter}
         onFilterChange={setFilter}
+        onSearchClick={() => setCommandPaletteOpen(true)}
         counts={{
+          inbox: workItems.filter(
+            (i) => i.status !== "Done" && i.status !== "Waiting" && i.urgency !== "Urgent" && i.confidence !== "Low",
+          ).length,
+          all: workItems.length,
           urgent: workItems.filter((i) => i.urgency === "Urgent" && i.status !== "Done" && i.status !== "Waiting").length,
           today: workItems.filter((i) => i.urgency === "Today" && i.status !== "Done" && i.status !== "Waiting").length,
           routine: workItems.filter((i) => i.urgency === "Routine" && i.status !== "Done" && i.status !== "Waiting").length,
@@ -66,6 +77,13 @@ export function VoicemailDashboard() {
           </div>
         )}
       </div>
+
+      <CommandPalette
+        open={commandPaletteOpen}
+        onOpenChange={setCommandPaletteOpen}
+        items={workItems}
+        onSelectItem={setSelectedItem}
+      />
     </div>
   )
 }

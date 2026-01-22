@@ -1,6 +1,6 @@
 "use client"
 
-import { Search, Inbox, Users, UserCheck, FileText, Archive,  CheckCircle2 } from "lucide-react"
+import { Search, Inbox, Users, UserCheck, FileText, Archive, CheckCircle2, Stethoscope } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface SidebarProps {
@@ -11,6 +11,7 @@ interface SidebarProps {
     today: number
     routine: number
     needsReview: number
+    triage: number
     autoResolved: number
     done: number
   }
@@ -22,6 +23,7 @@ export function Sidebar({ currentFilter, onFilterChange, counts }: SidebarProps)
   const mainFilters = [
     { id: "urgent", label: "Urgent", icon: UserCheck, count: counts.urgent },
     { id: "needs-review", label: "Needs Review", icon: Users, count: counts.needsReview },
+    { id: "triage", label: "Clinical Triage", icon: Stethoscope, count: counts.triage },
     { id: "auto-resolved", label: "Auto Resolved", icon: FileText, count: counts.autoResolved },
     { id: "all", label: "My Inbox", icon: Inbox, count: totalActive },
     { id: "done", label: "Done", icon: CheckCircle2, count: counts.done },
@@ -29,10 +31,6 @@ export function Sidebar({ currentFilter, onFilterChange, counts }: SidebarProps)
     { id: "archived", label: "Archived", icon: Archive, count: 0 },
   ]
 
-  const buckets = [
-    { id: "today", label: "Today", count: counts.today },
-    { id: "routine", label: "Routine", count: counts.routine },
-  ]
 
   return (
     <aside className="w-52 flex flex-col" style={{ backgroundColor: "var(--sidebar-bg)" }}>

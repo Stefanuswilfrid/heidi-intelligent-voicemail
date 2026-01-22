@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { X, Phone, Sparkles, AudioLines, ChevronDown, CheckCircle2, AlertTriangle, Info, Volume2, Square, PlayIcon,
+  BrainCircuit,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { WorkItem } from "@/lib/types"
@@ -33,6 +34,46 @@ export function VoicemailDetail({ item, onClose, onStatusChange }: VoicemailDeta
     text: ttsText,
     itemId: item.id,
   })
+
+  const whySection = useMemo(() => {
+    const isAutoResolved = item.status === "Done" && item.handledBy === "Automation"
+    const isUrgent = item.urgency === "Urgent" && !isAutoResolved
+    const needsReview = item.confidence === "Low" && !isAutoResolved && !isUrgent
+
+    if (isUrgent) {
+      return {
+        tone: "urgent" as const,
+        title: "WHY THIS WAS FLAGGED",
+        body:
+          item.whyFlagged ||
+          "This call includes language commonly associated with urgent clinical symptoms and requires clinician review.",
+      }
+    }
+
+    if (needsReview) {
+      const missing = item.missingInfo?.length ? ` Missing: ${item.missingInfo.join(", ")}.` : ""
+      return {
+        tone: "needs_review" as const,
+        title: "WHY THIS NEEDS REVIEW",
+        body:
+          item.whyFlagged ||
+          `The message could not be confidently classified and needs a quick manual check.${missing}`.trim(),
+      }
+    }
+
+    if (isAutoResolved) {
+      return {
+        tone: "auto_resolved" as const,
+        title: "WHY NO ACTION IS NEEDED",
+        body:
+          item.whyFlagged ||
+          item.recommendedNextStep ||
+          "This item matched a known pattern and was safely handled automatically. No staff action is required.",
+      }
+    }
+
+    return null
+  }, [item])
 
   return (
     <div className="flex-1 flex flex-col bg-card animate-fade-in-up">
@@ -190,13 +231,32 @@ export function VoicemailDetail({ item, onClose, onStatusChange }: VoicemailDeta
           {/* Assessment (scrolls with content) */}
           <div className="pt-1 pb-2">
             <div className="space-y-2">
-              <div className="text-xs text-muted-foreground">Assessment</div>
+              <div className="text-xs text-muted-foreground">Call Context</div>
               <p className="text-sm text-foreground leading-relaxed">
                 Customer seems calm, but has potential to become frustrated. Likely non-technical as she hasn't read the
                 instruction on her medicine.
               </p>
             </div>
           </div>
+
+          {whySection && (
+            <div className="pb-3">
+              <div className="rounded-lg border border-border bg-card/50 px-4 py-3">
+                <div className="flex items-center gap-2 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+                  <BrainCircuit
+                    className={cn(
+                      "h-4 w-4",
+                      whySection.tone === "urgent" && "text-red-500",
+                      whySection.tone === "needs_review" && "text-amber-500",
+                      whySection.tone === "auto_resolved" && "text-emerald-600",
+                    )}
+                  />
+                  <span>{whySection.title}</span>
+                </div>
+                <p className="mt-2 text-sm text-foreground leading-relaxed">“{whySection.body}”</p>
+              </div>
+            </div>
+          )}
 
           {activeTab === "summary" ? (
             <div className="space-y-4">
@@ -438,22 +498,33 @@ export function VoicemailDetail({ item, onClose, onStatusChange }: VoicemailDeta
           )}
 
           {/* Persistent actions */}
-          <div className="px-4 py-3 flex items-center justify-between gap-3">
-            <Button className="h-9 text-sm" onClick={() => onStatusChange(item.id, "In progress")}>
-              <Phone className="h-3.5 w-3.5 mr-2" />
-              Schedule follow up
-            </Button>
+          <div className="px-4 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Button className="h-9 text-sm" onClick={() => onStatusChange(item.id, "In progress")}>
+                  <Phone className="h-3.5 w-3.5 mr-2" />
+                  Call Back
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9"
+                  onClick={() => onStatusChange(item.id, "Waiting")}
+                  title="Forward to clinician"
+                >
+                  Forward to nurse / GP
+                </Button>
+              </div>
 
-            <div className="flex items-center gap-2">
-            
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-9"
-                onClick={() => onStatusChange(item.id, "Done")}
-              >
-                Mark done
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" className="h-9" onClick={() => onStatusChange(item.id, "Done")}>
+                  Mark done
+                </Button>
+              </div>
+            </div>
+
+            <div className="mt-1 text-[11px] text-muted-foreground">
+              For clinician review. Admins do not make clinical decisions.
             </div>
           </div>
         </div>

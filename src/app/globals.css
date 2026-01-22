@@ -22,6 +22,9 @@
   --accent: #fbf582;
   --accent-foreground: #2a0510;
 
+  --twc-background-secondary: 20 15% 89%;
+  --twc-background-secondary-opacity: 1;
+
   --destructive: #dc2626;
   --destructive-foreground: #ffffff;
   --border: #e0d9d4;
@@ -72,6 +75,10 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(0.269 0 0);
   --sidebar-ring: oklch(0.439 0 0);
+
+  /* Tailwind CSS token-compatible vars (used in button hover, etc) */
+  --twc-background-secondary: 0 0% 20%;
+  --twc-background-secondary-opacity: 1;
 }
 
 @theme inline {

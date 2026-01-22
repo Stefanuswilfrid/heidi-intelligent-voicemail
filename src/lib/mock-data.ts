@@ -131,7 +131,7 @@ export const mockWorkItems: WorkItem[] = [
     confidence: "High",
     missingInfo: [],
     recommendedNextStep: "Call/text patient to confirm the booking and share details",
-    status: "Waiting",
+    status: "New",
     handledBy: "Automation",
     receivedAt: new Date(Date.now() - 1000 * 60 * 12).toISOString(),
     transcript:

@@ -13,11 +13,12 @@ export function VoicemailDashboard() {
   const [workItems, setWorkItems] = useState<WorkItem[]>(mockWorkItems)
 
   const filteredItems = workItems.filter((item) => {
-    if (filter === "all") return item.status !== "Done"
-    if (filter === "urgent") return item.urgency === "Urgent" && item.status !== "Done"
-    if (filter === "today") return item.urgency === "Today" && item.status !== "Done"
-    if (filter === "routine") return item.urgency === "Routine" && item.status !== "Done"
-    if (filter === "needs-review") return item.confidence === "Low" && item.status !== "Done"
+    if (filter === "all") return item.status !== "Done" && item.status !== "Waiting"
+    if (filter === "urgent") return item.urgency === "Urgent" && item.status !== "Done" && item.status !== "Waiting"
+    if (filter === "today") return item.urgency === "Today" && item.status !== "Done" && item.status !== "Waiting"
+    if (filter === "routine") return item.urgency === "Routine" && item.status !== "Done" && item.status !== "Waiting"
+    if (filter === "needs-review") return item.confidence === "Low" && item.status !== "Done" && item.status !== "Waiting"
+    if (filter === "triage") return item.status === "Waiting"
     if (filter === "auto-resolved") return item.status === "Done" && item.handledBy === "Automation"
     if (filter === "done") return item.status === "Done" && item.handledBy !== "Automation"
     if (filter === "archived") return false
@@ -34,10 +35,11 @@ export function VoicemailDashboard() {
         currentFilter={filter}
         onFilterChange={setFilter}
         counts={{
-          urgent: workItems.filter((i) => i.urgency === "Urgent" && i.status !== "Done").length,
-          today: workItems.filter((i) => i.urgency === "Today" && i.status !== "Done").length,
-          routine: workItems.filter((i) => i.urgency === "Routine" && i.status !== "Done").length,
-          needsReview: workItems.filter((i) => i.confidence === "Low" && i.status !== "Done").length,
+          urgent: workItems.filter((i) => i.urgency === "Urgent" && i.status !== "Done" && i.status !== "Waiting").length,
+          today: workItems.filter((i) => i.urgency === "Today" && i.status !== "Done" && i.status !== "Waiting").length,
+          routine: workItems.filter((i) => i.urgency === "Routine" && i.status !== "Done" && i.status !== "Waiting").length,
+          needsReview: workItems.filter((i) => i.confidence === "Low" && i.status !== "Done" && i.status !== "Waiting").length,
+          triage: workItems.filter((i) => i.status === "Waiting").length,
           autoResolved: workItems.filter((i) => i.status === "Done" && i.handledBy === "Automation").length,
           done: workItems.filter((i) => i.status === "Done" && i.handledBy !== "Automation").length,
         }}
